@@ -73,12 +73,10 @@ class sprayProj : public Projectile {
 
 class Dirt : public Actor { //Part 1
 public:
-    Dirt(int x, int y);
+    Dirt(int xFromCenter, int yFromCenter);
     void doSomething();
     void damage();
     ~Dirt();
-private:
-    
 };
 
 class Food : public Actor {

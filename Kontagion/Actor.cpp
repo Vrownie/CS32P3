@@ -43,13 +43,17 @@ void Socrates::doSomething() {
         {
         case KEY_PRESS_LEFT:
                 rectToPolar(getX(), getY(), newR, newTheta);
-                polarToRect(newR, newTheta + 5, newX, newY);
+                newTheta += 5;
+                polarToRect(newR, newTheta, newX, newY);
                 moveTo(newX, newY);
+                setDirection(newTheta + 180);
                 break;
         case KEY_PRESS_RIGHT:
                 rectToPolar(getX(), getY(), newR, newTheta);
-                polarToRect(newR, newTheta - 5, newX, newY);
+                newTheta -= 5;
+                polarToRect(newR, newTheta, newX, newY);
                 moveTo(newX, newY);
+                setDirection(newTheta + 180);
                 break;
         case KEY_PRESS_SPACE:
                 break;
