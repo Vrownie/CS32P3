@@ -18,7 +18,10 @@ public:
     ~StudentWorld();
 private:
     std::list<Actor*> m_list;
-    Actor* m_player;
+    Socrates* m_player;
+    int m_nPit;
+    int m_nFood;
+    int m_nDirt;
 };
 
 #endif // STUDENTWORLD_H_

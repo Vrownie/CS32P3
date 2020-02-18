@@ -5,6 +5,8 @@
 
 // Students:  Add code to this file, Actor.cpp, StudentWorld.h, and StudentWorld.cpp
 
+class StudentWorld;
+
 class Actor : public GraphObject { //Part 1
 public:
     Actor(int ID, int x, int y, Direction dir, int d, bool ind);
@@ -19,14 +21,18 @@ private:
 
 class Socrates : public Actor { //Part 1
 public:
-    Socrates();
+    Socrates(StudentWorld* w_ptr);
     void doSomething();
     ~Socrates();
     void damage();
+    int getSpray();
+    int getFlame();
+    int getHP();
 private:
     int m_spray;
     int m_flame;
     int m_hp;
+    StudentWorld* m_world;
 };
 
 class Bacteria : public Actor {
@@ -98,5 +104,9 @@ class lifeG : public Goody {
 class Fungi : public Actor {
     
 };
+
+void polarToRect(int r, double theta, int& x, int& y);
+
+void rectToPolar(int x, int y, int& r, double& theta);
 
 #endif // ACTOR_H_
