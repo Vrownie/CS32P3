@@ -15,6 +15,8 @@ public:
     bool isAlive();
     void setDead();
     virtual void damage() = 0;
+    virtual bool blocks();
+    virtual bool allowsOverlap();
 private:
     bool m_isAlive;
 };
@@ -77,10 +79,16 @@ public:
     void doSomething();
     void damage();
     ~Dirt();
+    bool blocks();
+    bool allowsOverlap();
 };
 
 class Food : public Actor {
-    
+public:
+    Food(int xFromCenter, int yFromCenter);
+    void doSomething();
+    void damage();
+    ~Food();
 };
 
 class Goody : public Actor {
@@ -106,5 +114,13 @@ class Fungi : public Actor {
 void polarToRect(int r, double theta, int& x, int& y);
 
 void rectToPolar(int x, int y, int& r, double& theta);
+
+bool overlap(const Actor& a1, const Actor& a2);
+
+bool overlap(int x1, int y1, int x2, int y2);
+
+bool MovementOverlap(const Bacteria& b, const Dirt& d);
+
+void randPolar(int r, int& x, int& y);
 
 #endif // ACTOR_H_

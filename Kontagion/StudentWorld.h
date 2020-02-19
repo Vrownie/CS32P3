@@ -24,4 +24,6 @@ private:
     int m_nDirt;
 };
 
+void getValidCoords(Actor* aa, int& x, int& y);
+
 #endif // STUDENTWORLD_H_

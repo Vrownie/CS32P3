@@ -15,6 +15,20 @@ GameWorld* createStudentWorld(string assetPath)
 
 // Students:  Add code to this file, StudentWorld.h, Actor.h and Actor.cpp
 
+void getValidCoords(list<Actor*> la, int& x, int& y) {
+    bool overlapInd;
+    do {
+        overlapInd = false;
+        randPolar(120, x, y);
+        for(list<Actor*>::iterator i = la.begin(); i != la.end(); i++) {
+            if ((*i)->allowsOverlap() && overlap((*i)->getX(), (*i)->getY(), x, y)) {
+                overlapInd = true;
+            }
+        }
+    }
+    while (overlapInd);
+}
+
 StudentWorld::StudentWorld(string assetPath)
 : GameWorld(assetPath)
 {
@@ -27,11 +41,16 @@ int StudentWorld::init()
     m_nFood = min(getLevel() * 5, 25);
     m_nDirt = max(180 - getLevel() * 20, 20);
     
+    int x, y;
+    for (int n = 0; n < m_nFood; n++) {
+        //check overlap here in part 2
+        getValidCoords(m_list, x, y);
+        m_list.push_back(new Food(x, y));
+    }
     
     for (int n = 0; n < m_nDirt; n++) {
         //check overlap here in part 2
-        int x = randInt(-120, 120);
-        int y = randInt(-sqrt(pow(120, 2) - pow(x, 2)), sqrt(pow(120, 2) - pow(x, 2)));
+        getValidCoords(m_list, x, y);
         m_list.push_back(new Dirt(x, y));
     }
     
