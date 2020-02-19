@@ -9,16 +9,18 @@ class StudentWorld;
 
 class Actor : public GraphObject { //Part 1
 public:
-    Actor(int ID, int x, int y, Direction dir, int d, bool ind);
+    Actor(int ID, int x, int y, Direction dir, int d, bool ind, StudentWorld* w_ptr);
     virtual void doSomething() = 0;
     virtual ~Actor();
     bool isAlive();
     void setDead();
-    virtual void damage() = 0;
+    StudentWorld* getWorld();
+    virtual bool damage(int n) = 0; //true if damageable
     virtual bool blocks();
     virtual bool allowsOverlap();
 private:
     bool m_isAlive;
+    StudentWorld* m_world;
 };
 
 class Socrates : public Actor { //Part 1
@@ -26,7 +28,7 @@ public:
     Socrates(StudentWorld* w_ptr);
     void doSomething();
     ~Socrates();
-    void damage();
+    bool damage(int n);
     int getSpray();
     int getFlame();
     int getHP();
@@ -34,7 +36,6 @@ private:
     int m_spray;
     int m_flame;
     int m_hp;
-    StudentWorld* m_world;
 };
 
 class Bacteria : public Actor {
@@ -45,15 +46,15 @@ private:
     int m_hp;
 };
 
-class regSal : public Bacteria {
+class RegSal : public Bacteria {
     
 };
 
-class aggSal : public Bacteria {
+class AggSal : public Bacteria {
     
 };
 
-class eColi : public Bacteria {
+class EColi : public Bacteria {
     
 };
 
@@ -62,22 +63,39 @@ class Pit : public Actor {
 };
 
 class Projectile : public Actor {
-
+public:
+    Projectile(int xFromCenter, int yFromCenter, Direction dir, int ID, int max, StudentWorld* w_ptr);
+    bool damage(int n);
+    virtual void doSomething() = 0;
+    virtual bool getMaxTravel();
+    virtual ~Projectile();
+private:
+    int m_maxTravel;
 };
 
-class flameProj : public Projectile {
-    
+class FlameProj : public Projectile {
+public:
+    FlameProj(int xFromCenter, int yFromCenter, Direction dir, StudentWorld* w_ptr);
+    virtual void doSomething();
+    ~FlameProj();
+private:
+    int m_distTravelled;
 };
 
-class sprayProj : public Projectile {
-    
+class SprayProj : public Projectile {
+public:
+    SprayProj(int xFromCenter, int yFromCenter, Direction dir, StudentWorld* w_ptr);
+    virtual void doSomething();
+    ~SprayProj();
+private:
+    int m_distTravelled;
 };
 
 class Dirt : public Actor { //Part 1
 public:
-    Dirt(int xFromCenter, int yFromCenter);
+    Dirt(int xFromCenter, int yFromCenter, StudentWorld* w_ptr);
     void doSomething();
-    void damage();
+    bool damage(int n);
     ~Dirt();
     bool blocks();
     bool allowsOverlap();
@@ -85,25 +103,25 @@ public:
 
 class Food : public Actor {
 public:
-    Food(int xFromCenter, int yFromCenter);
+    Food(int xFromCenter, int yFromCenter, StudentWorld* w_ptr);
     void doSomething();
-    void damage();
+    bool damage(int n);
     ~Food();
 };
 
-class Goody : public Actor {
+class Goodie : public Actor {
     
 };
 
-class healthG : public Goody {
+class HealthG : public Goodie {
     
 };
 
-class flameG : public Goody {
+class FlameG : public Goodie {
     
 };
 
-class lifeG : public Goody {
+class LifeG : public Goodie {
     
 };
 
@@ -111,16 +129,10 @@ class Fungi : public Actor {
     
 };
 
-void polarToRect(int r, double theta, int& x, int& y);
+void polarToRect(double r, double theta, double& x, double& y);
 
-void rectToPolar(int x, int y, int& r, double& theta);
+void rectToPolar(double r, double theta, double& x, double& y);
 
-bool overlap(const Actor& a1, const Actor& a2);
-
-bool overlap(int x1, int y1, int x2, int y2);
-
-bool MovementOverlap(const Bacteria& b, const Dirt& d);
-
-void randPolar(int r, int& x, int& y);
+void movePolar(Actor* ap, double& r, double& theta);
 
 #endif // ACTOR_H_

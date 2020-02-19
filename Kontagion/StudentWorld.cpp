@@ -29,6 +29,29 @@ void getValidCoords(list<Actor*> la, int& x, int& y) {
     while (overlapInd);
 }
 
+bool overlap(const Actor* a1, const Actor* a2) {
+    double dist = sqrt(pow(a1->getX() - a2->getX(), 2) + pow(a1->getY() - a2->getY(), 2));
+    
+    return dist < 2 * SPRITE_RADIUS;
+}
+
+bool overlap(int x1, int y1, int x2, int y2) {
+    double dist = sqrt(pow(x1-x2, 2) + pow(y1-y2, 2));
+    
+    return dist < 2 * SPRITE_RADIUS;
+}
+
+bool MovementOverlap(const Bacteria& b, const Dirt& d) {
+    double dist = sqrt(pow(b.getX() - d.getX(), 2) + pow(b.getY() - d.getY(), 2));
+    
+    return dist < SPRITE_RADIUS;
+}
+
+void randPolar(int r, int& x, int& y) {
+    x = randInt(-r, r);
+    y = randInt(-sqrt(pow(r, 2) - pow(x, 2)), sqrt(pow(r, 2) - pow(x, 2)));
+}
+
 StudentWorld::StudentWorld(string assetPath)
 : GameWorld(assetPath)
 {
@@ -45,13 +68,13 @@ int StudentWorld::init()
     for (int n = 0; n < m_nFood; n++) {
         //check overlap here in part 2
         getValidCoords(m_list, x, y);
-        m_list.push_back(new Food(x, y));
+        m_list.push_back(new Food(x, y, this));
     }
     
     for (int n = 0; n < m_nDirt; n++) {
         //check overlap here in part 2
         getValidCoords(m_list, x, y);
-        m_list.push_back(new Dirt(x, y));
+        m_list.push_back(new Dirt(x, y, this));
     }
     
     return GWSTATUS_CONTINUE_GAME;
@@ -61,23 +84,19 @@ int StudentWorld::move()
 {
     m_player->doSomething();
     for (list<Actor*>::iterator i = m_list.begin(); i != m_list.end(); i++) {
-        if((*i)->isAlive()) {
+        if((*i)->isAlive())
             (*i)->doSomething();
-        }
-        if(!m_player->isAlive()) {
+        if(!m_player->isAlive())
             return GWSTATUS_PLAYER_DIED;
-        }
-        if(m_list.empty()) {
+        if(m_list.empty())
             return GWSTATUS_FINISHED_LEVEL;
-        }
     }
     
     for (list<Actor*>::iterator i = m_list.begin(); i != m_list.end(); ) {
-        if(!(*i)->isAlive()) {
+        if(!(*i)->isAlive())
             i = m_list.erase(i);
-        } else {
+        else
             i++;
-        }
     }
     
     ostringstream oss;
@@ -92,11 +111,22 @@ int StudentWorld::move()
 
 void StudentWorld::cleanUp()
 {
-    for (list<Actor*>::iterator i = m_list.begin(); i != m_list.end(); i++) {
+    for (list<Actor*>::iterator i = m_list.begin(); i != m_list.end(); i++)
         delete *i;
-    }
     
     delete m_player;
+}
+
+bool StudentWorld::damageDamageable(Actor* ap, int n) {
+    for (list<Actor*>::iterator i = m_list.begin(); i != m_list.end(); i++) {
+        if (overlap(ap, *i))
+            return (*i)->damage(n);
+    }
+    return false;
+}
+
+void StudentWorld::addFlame(int x, int y, Direction dir) {
+    m_list.push_back(new FlameProj(x, y, dir, this));
 }
 
 StudentWorld::~StudentWorld() { cleanUp(); }
