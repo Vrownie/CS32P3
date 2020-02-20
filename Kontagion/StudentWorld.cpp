@@ -93,14 +93,15 @@ int StudentWorld::move()
     }
     
     for (list<Actor*>::iterator i = m_list.begin(); i != m_list.end(); ) {
-        if(!(*i)->isAlive())
+        if(!(*i)->isAlive()) {
+            delete *i;
             i = m_list.erase(i);
-        else
+        } else
             i++;
     }
     
     ostringstream oss;
-    oss << "Score: " << setfill('0') << setw(6) << getScore() << setw(0) << " Level: " << getLevel() << " Lives: " << getLives() << " health: " << m_player->getHP() << " Sprays: " << m_player->getSpray() << " Flames: " << m_player->getFlame();
+    oss << "Score: " << setfill('0') << setw(6) << getScore() << setw(0) << " Level: " << getLevel() << " Lives: " << getLives() << " Health: " << m_player->getHP() << " Sprays: " << m_player->getSpray() << " Flames: " << m_player->getFlame();
     
     //add new stuff here in part 2
     
@@ -111,8 +112,10 @@ int StudentWorld::move()
 
 void StudentWorld::cleanUp()
 {
-    for (list<Actor*>::iterator i = m_list.begin(); i != m_list.end(); i++)
+    for (list<Actor*>::iterator i = m_list.begin(); i != m_list.end(); i++) {
         delete *i;
+        i = m_list.erase(i);
+    }
     
     delete m_player;
 }

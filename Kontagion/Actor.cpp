@@ -50,8 +50,8 @@ Actor::~Actor() {}
 
 //Socrates
 Socrates::Socrates(StudentWorld* w_ptr) : Actor(IID_PLAYER, 0, VIEW_HEIGHT/2, 0, 0, true, w_ptr) {
-    m_spray = 20;
-    m_flame = 5;
+    m_spray = 100;
+    m_flame = 100;
     m_hp = 100;
 }
 
@@ -73,9 +73,8 @@ void Socrates::doSomething() {
                     xC = 0;
                     yC = 0;
                     thetaC = (getDirection() + 22 * i) % 360;
-                    polarToRect(2 * SPRITE_RADIUS, thetaC, xC, yC);
-                    xC = getX() - xC;
-                    yC = getY() - yC;
+                    xC = getX() + 2 * SPRITE_RADIUS * cos(thetaC * M_PI/180) - VIEW_WIDTH/2;
+                    yC = getY() + 2 * SPRITE_RADIUS * sin(thetaC * M_PI/180) - VIEW_HEIGHT/2;
                     getWorld()->addFlame(xC, yC, thetaC);
                 }
                 m_flame--;
@@ -133,45 +132,53 @@ Food::Food(int xFromCenter, int yFromCenter, StudentWorld* w_ptr) : Actor(IID_FO
 
 void Food::doSomething() {}
 
-bool Food::damage(int n) {
-    return false;
-}
+bool Food::damage(int n) { return false; }
 
 Food::~Food() {}
 
 //Projectile (virtual)
 Projectile::Projectile(int xFromCenter, int yFromCenter, Direction dir, int ID, int max, StudentWorld* w_ptr) : Actor(ID, VIEW_WIDTH / 2 + xFromCenter, VIEW_HEIGHT / 2 + yFromCenter, dir, 1, true, w_ptr) {
     m_maxTravel = max;
+    m_distTravelled = 0;
 }
 
 bool Projectile::damage(int n) {
     return false;
 }
 
-bool Projectile::getMaxTravel() { return m_maxTravel; }
+int Projectile::getMaxTravel() { return m_maxTravel; }
+
+int Projectile::getDistTravelled() { return m_distTravelled; }
+
+void Projectile::addDist(int n) { m_distTravelled += n; }
 
 Projectile::~Projectile() {}
 
 //Flame
-FlameProj::FlameProj(int xFromCenter, int yFromCenter, Direction dir, StudentWorld* w_ptr) : Projectile(xFromCenter, yFromCenter, dir, IID_FLAME, 32, w_ptr) { m_distTravelled = 0; }
+FlameProj::FlameProj(int xFromCenter, int yFromCenter, Direction dir, StudentWorld* w_ptr) : Projectile(xFromCenter, yFromCenter, dir, IID_FLAME, 32, w_ptr) {}
 
 void FlameProj::doSomething() {
     if (!isAlive()) return;
+    
     
     if(getWorld()->damageDamageable(this, 5)) {
         setDead();
         return;
     }
     
-    double x, y;
-    polarToRect(2 * SPRITE_RADIUS, getDirection(), x, y);
-    x += getX() - VIEW_WIDTH / 2;
-    y += getY() - VIEW_HEIGHT / 2;
-    moveTo(x, y);
-    m_distTravelled += 2 * SPRITE_RADIUS;
+//    double x, y;
+//    x = getX() + 2 * SPRITE_RADIUS * cos(getDirection()*M_PI/180);
+//    y = getY() + 2 * SPRITE_RADIUS * sin(getDirection()*M_PI/180);
+//    polarToRect(2 * SPRITE_RADIUS, getDirection(), x, y);
+//    x += getX() - VIEW_WIDTH / 2;
+//    y += getY() - VIEW_HEIGHT / 2;
     
-    if(m_distTravelled == 32) {
+    moveAngle(getDirection(), 2*SPRITE_RADIUS);
+    addDist(2*SPRITE_RADIUS);
+    
+    if(getDistTravelled() == getMaxTravel()) {
         setDead();
+        return;
     }
 }
 

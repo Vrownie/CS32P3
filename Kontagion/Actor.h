@@ -67,10 +67,13 @@ public:
     Projectile(int xFromCenter, int yFromCenter, Direction dir, int ID, int max, StudentWorld* w_ptr);
     bool damage(int n);
     virtual void doSomething() = 0;
-    virtual bool getMaxTravel();
+    int getMaxTravel();
+    int getDistTravelled();
+    void addDist(int n);
     virtual ~Projectile();
 private:
     int m_maxTravel;
+    int m_distTravelled;
 };
 
 class FlameProj : public Projectile {
@@ -78,8 +81,6 @@ public:
     FlameProj(int xFromCenter, int yFromCenter, Direction dir, StudentWorld* w_ptr);
     virtual void doSomething();
     ~FlameProj();
-private:
-    int m_distTravelled;
 };
 
 class SprayProj : public Projectile {
@@ -87,8 +88,6 @@ public:
     SprayProj(int xFromCenter, int yFromCenter, Direction dir, StudentWorld* w_ptr);
     virtual void doSomething();
     ~SprayProj();
-private:
-    int m_distTravelled;
 };
 
 class Dirt : public Actor { //Part 1
