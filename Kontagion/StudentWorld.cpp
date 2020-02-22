@@ -132,4 +132,8 @@ void StudentWorld::addFlame(int x, int y, Direction dir) {
     m_list.push_back(new FlameProj(x, y, dir, this));
 }
 
+void StudentWorld::addSpray(int x, int y, Direction dir) {
+    m_list.push_back(new SprayProj(x, y, dir, this));
+}
+
 StudentWorld::~StudentWorld() { cleanUp(); }

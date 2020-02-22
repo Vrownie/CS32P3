@@ -17,6 +17,7 @@ public:
     virtual void cleanUp();
     bool damageDamageable(Actor* ap, int n);
     void addFlame(int x, int y, Direction dir);
+    void addSpray(int x, int y, Direction dir);
     ~StudentWorld();
 private:
     std::list<Actor*> m_list;

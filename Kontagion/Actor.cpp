@@ -50,8 +50,8 @@ Actor::~Actor() {}
 
 //Socrates
 Socrates::Socrates(StudentWorld* w_ptr) : Actor(IID_PLAYER, 0, VIEW_HEIGHT/2, 0, 0, true, w_ptr) {
-    m_spray = 100;
-    m_flame = 100;
+    m_spray = 20;
+    m_flame = 5;
     m_hp = 100;
 }
 
@@ -60,15 +60,21 @@ void Socrates::doSomething() {
     int ch;
     
     if(getWorld()->getKey(ch)) {
-        double newR, newTheta;
+        double thetaC, rC, xC, yC;
         switch (ch)
         {
             case KEY_PRESS_SPACE:
-                //Add here
+                if (m_spray == 0) break;
+                xC = 0;
+                yC = 0;
+                xC = getX() + 2 * SPRITE_RADIUS * cos(getDirection() * M_PI/180) - VIEW_WIDTH/2;
+                yC = getY() + 2 * SPRITE_RADIUS * sin(getDirection() * M_PI/180) - VIEW_HEIGHT/2;
+                getWorld()->addSpray(xC, yC, getDirection());
+                m_spray--;
+                getWorld()->playSound(SOUND_PLAYER_SPRAY);
                 break;
             case KEY_PRESS_ENTER:
                 if (m_flame == 0) break;
-                double thetaC, xC, yC;
                 for (int i = 0; i < 16; i++) {
                     xC = 0;
                     yC = 0;
@@ -81,20 +87,20 @@ void Socrates::doSomething() {
                 getWorld()->playSound(SOUND_PLAYER_FIRE);
                 break;
             case KEY_PRESS_LEFT:
-                newR = 0;
-                newTheta = 5;
-                movePolar(this, newR, newTheta);
-                setDirection(newTheta + 180);
+                rC = 0;
+                thetaC = 5;
+                movePolar(this, rC, thetaC);
+                setDirection(thetaC + 180);
                 break;
             case KEY_PRESS_RIGHT:
-                newR = 0;
-                newTheta = -5;
-                movePolar(this, newR, newTheta);
-                setDirection(newTheta + 180);
+                rC = 0;
+                thetaC = -5;
+                movePolar(this, rC, thetaC);
+                setDirection(thetaC + 180);
                 break;
-            default:
-                if (m_spray < 20) m_spray++;
         }
+    } else {
+        if (m_spray < 20) m_spray++;
     }
 }
 
@@ -154,24 +160,16 @@ void Projectile::addDist(int n) { m_distTravelled += n; }
 
 Projectile::~Projectile() {}
 
-//Flame
+//Flame Projectile
 FlameProj::FlameProj(int xFromCenter, int yFromCenter, Direction dir, StudentWorld* w_ptr) : Projectile(xFromCenter, yFromCenter, dir, IID_FLAME, 32, w_ptr) {}
 
 void FlameProj::doSomething() {
     if (!isAlive()) return;
     
-    
     if(getWorld()->damageDamageable(this, 5)) {
         setDead();
         return;
     }
-    
-//    double x, y;
-//    x = getX() + 2 * SPRITE_RADIUS * cos(getDirection()*M_PI/180);
-//    y = getY() + 2 * SPRITE_RADIUS * sin(getDirection()*M_PI/180);
-//    polarToRect(2 * SPRITE_RADIUS, getDirection(), x, y);
-//    x += getX() - VIEW_WIDTH / 2;
-//    y += getY() - VIEW_HEIGHT / 2;
     
     moveAngle(getDirection(), 2*SPRITE_RADIUS);
     addDist(2*SPRITE_RADIUS);
@@ -183,3 +181,26 @@ void FlameProj::doSomething() {
 }
 
 FlameProj::~FlameProj() {}
+
+//Spray Projectile
+
+SprayProj::SprayProj(int xFromCenter, int yFromCenter, Direction dir, StudentWorld* w_ptr) : Projectile(xFromCenter, yFromCenter, dir, IID_SPRAY, 112, w_ptr) {}
+
+void SprayProj::doSomething() {
+    if (!isAlive()) return;
+    
+    if(getWorld()->damageDamageable(this, 2)) {
+        setDead();
+        return;
+    }
+    
+    moveAngle(getDirection(), 2*SPRITE_RADIUS);
+    addDist(2*SPRITE_RADIUS);
+    
+    if(getDistTravelled() == getMaxTravel()) {
+        setDead();
+        return;
+    }
+}
+
+SprayProj::~SprayProj() {}
