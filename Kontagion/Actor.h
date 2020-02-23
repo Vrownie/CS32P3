@@ -16,6 +16,7 @@ public:
     void setDead();
     StudentWorld* getWorld();
     virtual bool damage(int n) = 0; //true if damageable
+    virtual bool eat(); //only food can be eaten
     virtual bool blocks();
     virtual bool allowsOverlap();
 private:
@@ -26,7 +27,7 @@ private:
 class Socrates : public Actor { //Part 1
 public:
     Socrates(StudentWorld* w_ptr);
-    void doSomething();
+    virtual void doSomething();
     ~Socrates();
     bool damage(int n);
     int getSpray();
@@ -40,22 +41,51 @@ private:
 
 class Bacteria : public Actor {
 public:
-    Bacteria();
+    Bacteria(int x, int y, int ID, StudentWorld* w_ptr, int hp, int movementPlan, int amtDmg); //play sound
+    virtual void doSomething();
+    virtual void doSpecificThing() = 0;
+    virtual void addBacteria(int x, int y) = 0;
+    virtual bool damage(int n) = 0; //play sound
     ~Bacteria();
 private:
     int m_hp;
+    int m_planDist;
+    int m_amtDmg;
+    int m_foodEaten;
 };
 
-class RegSal : public Bacteria {
-    
+class Salmonella : public Bacteria {
+    Salmonella(int x, int y);
+    virtual void doSomething();
+    virtual void doSpecificThing() = 0;
+    virtual void addBacteria(int x, int y);
+    virtual bool damage(int n); //play sound
+    ~Salmonella();
 };
 
-class AggSal : public Bacteria {
-    
+class AggSal : public Salmonella {
+    AggSal(int x, int y);
+    virtual void doSomething();
+    virtual void doSpecificThing() = 0;
+    virtual void addBacteria(int x, int y);
+    ~AggSal();
+};
+
+class RegSal : public Salmonella {
+    RegSal(int x, int y);
+    virtual void doSomething();
+    virtual void doSpecificThing() = 0;
+    virtual void addBacteria(int x, int y);
+    ~RegSal();
 };
 
 class EColi : public Bacteria {
-    
+    EColi(int x, int y);
+    virtual void doSomething();
+    virtual void doSpecificThing() = 0;
+    virtual void addBacteria(int x, int y);
+    virtual bool damage(int n); //play sound
+    ~EColi();
 };
 
 class Pit : public Actor {
@@ -93,7 +123,7 @@ public:
 class Dirt : public Actor { //Part 1
 public:
     Dirt(int xFromCenter, int yFromCenter, StudentWorld* w_ptr);
-    void doSomething();
+    virtual void doSomething();
     bool damage(int n);
     ~Dirt();
     bool blocks();
@@ -103,7 +133,8 @@ public:
 class Food : public Actor {
 public:
     Food(int xFromCenter, int yFromCenter, StudentWorld* w_ptr);
-    void doSomething();
+    virtual void doSomething();
+    virtual bool eat(); //overrides default
     bool damage(int n);
     ~Food();
 };
@@ -133,5 +164,7 @@ void polarToRect(double r, double theta, double& x, double& y);
 void rectToPolar(double r, double theta, double& x, double& y);
 
 void movePolar(Actor* ap, double& r, double& theta);
+
+void calcNewXY(int& x, int& y);
 
 #endif // ACTOR_H_

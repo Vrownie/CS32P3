@@ -128,12 +128,26 @@ bool StudentWorld::damageDamageable(Actor* ap, int n) {
     return false;
 }
 
-void StudentWorld::addFlame(int x, int y, Direction dir) {
-    m_list.push_back(new FlameProj(x, y, dir, this));
-}
+void StudentWorld::addFlame(int x, int y, Direction dir) { m_list.push_back(new FlameProj(x, y, dir, this)); }
 
-void StudentWorld::addSpray(int x, int y, Direction dir) {
-    m_list.push_back(new SprayProj(x, y, dir, this));
+void StudentWorld::addSpray(int x, int y, Direction dir) { m_list.push_back(new SprayProj(x, y, dir, this)); }
+
+void addRegSal(int x, int y) {}
+
+void addAggSal(int x, int y) {}
+
+void addEColi(int x, int y) {}
+
+void StudentWorld::damageSocrates(int n) { m_player->damage(n); }
+
+bool StudentWorld::overlapSocrates(Actor* ap) { return overlap(ap, m_player); }
+
+bool StudentWorld::attemptEat(Actor* ap) {
+    for(list<Actor*>::iterator i = m_list.begin(); i != m_list.end(); i++) {
+        if (overlap(ap, *i) && (*i)->eat())
+            return true;
+    }
+    return false;
 }
 
 StudentWorld::~StudentWorld() { cleanUp(); }

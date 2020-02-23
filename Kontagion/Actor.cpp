@@ -30,6 +30,11 @@ void movePolar(Actor* ap, double& r, double& theta) {
     theta = newTheta;
 }
 
+void calcNewXY(int& x, int& y) {
+    x += (x < VIEW_WIDTH / 2) ? SPRITE_RADIUS : -SPRITE_RADIUS;
+    y += (y < VIEW_HEIGHT / 2) ? SPRITE_RADIUS : -SPRITE_RADIUS;
+}
+
 //Actor
 Actor::Actor(int ID, int x, int y, Direction dir, int d, bool ind, StudentWorld* w_ptr) : GraphObject(ID, x, y, dir, d) {
     m_isAlive = ind;
@@ -46,6 +51,8 @@ bool Actor::blocks() { return false; } //has to be a dirt
 
 bool Actor::allowsOverlap() { return false; } //has to be a dirt
 
+bool Actor::eat() { return false; }
+
 Actor::~Actor() {}
 
 //Socrates
@@ -57,8 +64,8 @@ Socrates::Socrates(StudentWorld* w_ptr) : Actor(IID_PLAYER, 0, VIEW_HEIGHT/2, 0,
 
 void Socrates::doSomething() {
     if(!isAlive()) return;
-    int ch;
     
+    int ch;
     if(getWorld()->getKey(ch)) {
         double thetaC, rC, xC, yC;
         switch (ch)
@@ -138,6 +145,11 @@ Food::Food(int xFromCenter, int yFromCenter, StudentWorld* w_ptr) : Actor(IID_FO
 
 void Food::doSomething() {}
 
+bool Food::eat() {
+    setDead();
+    return true;
+}
+
 bool Food::damage(int n) { return false; }
 
 Food::~Food() {}
@@ -204,3 +216,50 @@ void SprayProj::doSomething() {
 }
 
 SprayProj::~SprayProj() {}
+
+//Bacteria (virtual)
+Bacteria::Bacteria(int x, int y, int ID, StudentWorld* w_ptr, int hp, int movementPlan, int amtDmg) : Actor(ID, x, y, 90, 0, true, w_ptr) {
+    m_hp = hp;
+    m_planDist = movementPlan;
+    m_amtDmg = amtDmg;
+    m_foodEaten = 0;
+    getWorld()->playSound(SOUND_BACTERIUM_BORN);
+}
+
+void Bacteria::doSomething() {
+    if (!isAlive()) return;
+    
+    int ind;
+    if (getWorld()->overlapSocrates(this))
+        ind = 1;
+    else if (m_foodEaten == 3)
+        ind = 2;
+    else if (getWorld()->attemptEat(this))
+        ind = 3;
+    else //to make the compiler happy...
+        ind = 0;
+    
+    switch(ind)
+    {
+        case 1: {
+            getWorld()->damageSocrates(m_amtDmg);
+            break;
+        }
+        case 2: {
+            int x = getX();
+            int y = getY();
+            calcNewXY(x, y);
+            addBacteria(x, y);
+            m_foodEaten = 0;
+            break;
+        }
+        case 3: {
+            break;
+        }
+    }
+    
+    doSpecificThing();
+}
+
+Bacteria::~Bacteria() {}
+

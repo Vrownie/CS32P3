@@ -18,6 +18,12 @@ public:
     bool damageDamageable(Actor* ap, int n);
     void addFlame(int x, int y, Direction dir);
     void addSpray(int x, int y, Direction dir);
+    void addRegSal(int x, int y);
+    void addAggSal(int x, int y);
+    void addEColi(int x, int y);
+    void damageSocrates(int n);
+    bool overlapSocrates(Actor* ap);
+    bool attemptEat(Actor* ap);
     ~StudentWorld();
 private:
     std::list<Actor*> m_list;
