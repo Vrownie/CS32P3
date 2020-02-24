@@ -30,13 +30,18 @@ void movePolar(Actor* ap, double& r, double& theta) {
     theta = newTheta;
 }
 
+int calcDistance(Actor* a1, Actor* a2) {
+    return sqrt(pow(a1->getX()-a2->getX(), 2)+pow(a1->getY()-a2->getY(), 2));
+}
+
 void calcNewXY(int& x, int& y) {
     x += (x < VIEW_WIDTH / 2) ? SPRITE_RADIUS : -SPRITE_RADIUS;
     y += (y < VIEW_HEIGHT / 2) ? SPRITE_RADIUS : -SPRITE_RADIUS;
 }
 
 //Actor
-Actor::Actor(int ID, int x, int y, Direction dir, int d, bool ind, StudentWorld* w_ptr) : GraphObject(ID, x, y, dir, d) {
+Actor::Actor(int ID, int x, int y, Direction dir, int d, int hp, bool ind,  StudentWorld* w_ptr) : GraphObject(ID, x, y, dir, d) {
+    m_hp = hp;
     m_isAlive = ind;
     m_world = w_ptr;
 }
@@ -53,13 +58,20 @@ bool Actor::allowsOverlap() { return false; } //has to be a dirt
 
 bool Actor::eat() { return false; }
 
+int Actor::getHP() { return m_hp; }
+
+bool Actor::damage(int n) {
+    m_hp -= n;
+    if (m_hp <= 0) setDead();
+    return true;
+}
+
 Actor::~Actor() {}
 
 //Socrates
-Socrates::Socrates(StudentWorld* w_ptr) : Actor(IID_PLAYER, 0, VIEW_HEIGHT/2, 0, 0, true, w_ptr) {
+Socrates::Socrates(StudentWorld* w_ptr) : Actor(IID_PLAYER, 0, VIEW_HEIGHT/2, 0, 0, 100, true, w_ptr) {
     m_spray = 20;
     m_flame = 5;
-    m_hp = 100;
 }
 
 void Socrates::doSomething() {
@@ -111,28 +123,16 @@ void Socrates::doSomething() {
     }
 }
 
-bool Socrates::damage(int n) {
-    m_hp -= n;
-    return true;
-} //temporary
-
 int Socrates::getSpray() { return m_spray; }
 
 int Socrates::getFlame() { return m_flame; }
 
-int Socrates::getHP() { return m_hp; }
-
 Socrates::~Socrates() {}
 
 //Dirt
-Dirt::Dirt(int xFromCenter, int yFromCenter, StudentWorld* w_ptr) : Actor(IID_DIRT, VIEW_WIDTH / 2 + xFromCenter, VIEW_HEIGHT / 2 + yFromCenter, 0, 1, true, w_ptr) {}
+Dirt::Dirt(int xFromCenter, int yFromCenter, StudentWorld* w_ptr) : Actor(IID_DIRT, VIEW_WIDTH / 2 + xFromCenter, VIEW_HEIGHT / 2 + yFromCenter, 0, 1, -1, true, w_ptr) {}
 
 void Dirt::doSomething() {}
-
-bool Dirt::damage(int n) {
-    setDead();
-    return true;
-}
 
 Dirt::~Dirt() {}
 
@@ -141,7 +141,7 @@ bool Dirt::blocks() { return true; } //overrides Actor's blocks()
 bool Dirt::allowsOverlap() { return true; } //overrides Actor's allowsOverlap()
 
 //Food
-Food::Food(int xFromCenter, int yFromCenter, StudentWorld* w_ptr) : Actor(IID_FOOD, VIEW_WIDTH / 2 + xFromCenter, VIEW_HEIGHT / 2 + yFromCenter, 90, 1, true, w_ptr) {}
+Food::Food(int xFromCenter, int yFromCenter, StudentWorld* w_ptr) : Actor(IID_FOOD, VIEW_WIDTH / 2 + xFromCenter, VIEW_HEIGHT / 2 + yFromCenter, 90, 1, -1, true, w_ptr) {}
 
 void Food::doSomething() {}
 
@@ -150,12 +150,10 @@ bool Food::eat() {
     return true;
 }
 
-bool Food::damage(int n) { return false; }
-
 Food::~Food() {}
 
 //Projectile (virtual)
-Projectile::Projectile(int xFromCenter, int yFromCenter, Direction dir, int ID, int max, StudentWorld* w_ptr) : Actor(ID, VIEW_WIDTH / 2 + xFromCenter, VIEW_HEIGHT / 2 + yFromCenter, dir, 1, true, w_ptr) {
+Projectile::Projectile(int xFromCenter, int yFromCenter, Direction dir, int ID, int max, StudentWorld* w_ptr) : Actor(ID, VIEW_WIDTH / 2 + xFromCenter, VIEW_HEIGHT / 2 + yFromCenter, dir, 1, -1, true, w_ptr) {
     m_maxTravel = max;
     m_distTravelled = 0;
 }
@@ -218,12 +216,12 @@ void SprayProj::doSomething() {
 SprayProj::~SprayProj() {}
 
 //Bacteria (virtual)
-Bacteria::Bacteria(int x, int y, int ID, StudentWorld* w_ptr, int hp, int movementPlan, int amtDmg) : Actor(ID, x, y, 90, 0, true, w_ptr) {
-    m_hp = hp;
+Bacteria::Bacteria(int x, int y, int ID, StudentWorld* w_ptr, int hp, int movementPlan, int amtDmg) : Actor(ID, x, y, 90, 0, hp, true, w_ptr) {
     m_planDist = movementPlan;
     m_amtDmg = amtDmg;
     m_foodEaten = 0;
     getWorld()->playSound(SOUND_BACTERIUM_BORN);
+    getWorld()->incBacteriaCount();
 }
 
 void Bacteria::doSomething() {
@@ -263,3 +261,34 @@ void Bacteria::doSomething() {
 
 Bacteria::~Bacteria() {}
 
+//EColi
+EColi::EColi(int x, int y, StudentWorld* w_ptr) : Bacteria(x, y, IID_ECOLI, w_ptr, 5, 0, 4) {}
+
+void EColi::doSpecificThing() {
+    if (getWorld()->calcDistSocrates(this) <= 256) {
+        Direction theta = getWorld()->calcAngleSocrates(this);;
+        for (int n = 0; n < 10; n++) {
+            if (getWorld()->attemptMove(this, theta, 2)) {
+                moveTo(getX() + 2 * cos(theta * M_PI / 180), getY() + 2 * sin(theta * M_PI / 180));
+                return;
+            }
+            theta += 10;
+        }
+    }
+}
+
+bool EColi::damage(int n) {
+    Actor::damage(n);
+    if(!isAlive()) {
+        getWorld()->decBacteriaCount();
+        getWorld()->playSound(SOUND_ECOLI_DIE);
+        getWorld()->increaseScore(100);
+        if(randInt(0, 1) == 0)
+            getWorld()->addFood(getX(), getY());
+    }
+    return true;
+}
+
+void EColi::addBacteria(int x, int y) { getWorld()->addEColi(x, y); }
+
+EColi::~EColi() {}

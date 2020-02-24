@@ -31,19 +31,21 @@ void getValidCoords(list<Actor*> la, int& x, int& y) {
 
 bool overlap(const Actor* a1, const Actor* a2) {
     double dist = sqrt(pow(a1->getX() - a2->getX(), 2) + pow(a1->getY() - a2->getY(), 2));
-    
     return dist < 2 * SPRITE_RADIUS;
 }
 
 bool overlap(int x1, int y1, int x2, int y2) {
     double dist = sqrt(pow(x1-x2, 2) + pow(y1-y2, 2));
-    
     return dist < 2 * SPRITE_RADIUS;
 }
 
-bool MovementOverlap(const Bacteria& b, const Dirt& d) {
-    double dist = sqrt(pow(b.getX() - d.getX(), 2) + pow(b.getY() - d.getY(), 2));
-    
+bool movementOverlap(const Bacteria* b, const Actor* a) {
+    double dist = sqrt(pow(b->getX() - a->getX(), 2) + pow(b->getY() - a->getY(), 2));
+    return dist < SPRITE_RADIUS;
+}
+
+bool movementOverlap(int x, int y, const Actor* a) {
+    double dist = sqrt(pow(x - a->getX(), 2) + pow(y - a->getY(), 2));
     return dist < SPRITE_RADIUS;
 }
 
@@ -52,17 +54,15 @@ void randPolar(int r, int& x, int& y) {
     y = randInt(-sqrt(pow(r, 2) - pow(x, 2)), sqrt(pow(r, 2) - pow(x, 2)));
 }
 
-StudentWorld::StudentWorld(string assetPath)
-: GameWorld(assetPath)
-{
-    m_player = new Socrates(this);
-}
+StudentWorld::StudentWorld(string assetPath) : GameWorld(assetPath) {}
 
 int StudentWorld::init()
 {
+    m_player = new Socrates(this);
     m_nPit = getLevel();
     m_nFood = min(getLevel() * 5, 25);
     m_nDirt = max(180 - getLevel() * 20, 20);
+    m_nBacteria = 0;
     
     int x, y;
     for (int n = 0; n < m_nFood; n++) {
@@ -77,6 +77,8 @@ int StudentWorld::init()
         m_list.push_back(new Dirt(x, y, this));
     }
     
+    m_list.push_back(new EColi(128, 128, this)); //testing
+    
     return GWSTATUS_CONTINUE_GAME;
 }
 
@@ -86,14 +88,19 @@ int StudentWorld::move()
     for (list<Actor*>::iterator i = m_list.begin(); i != m_list.end(); i++) {
         if((*i)->isAlive())
             (*i)->doSomething();
-        if(!m_player->isAlive())
+        if(!m_player->isAlive()) {
+            decLives();
+            playSound(SOUND_PLAYER_DIE);
             return GWSTATUS_PLAYER_DIED;
-        if(m_list.empty())
+        }
+        if(m_nBacteria == 0) {
+            playSound(SOUND_FINISHED_LEVEL);
             return GWSTATUS_FINISHED_LEVEL;
+        }
     }
     
     for (list<Actor*>::iterator i = m_list.begin(); i != m_list.end(); ) {
-        if(!(*i)->isAlive()) {
+        if(*i != nullptr && !(*i)->isAlive()) {
             delete *i;
             i = m_list.erase(i);
         } else
@@ -101,7 +108,7 @@ int StudentWorld::move()
     }
     
     ostringstream oss;
-    oss << "Score: " << setfill('0') << setw(6) << getScore() << setw(0) << " Level: " << getLevel() << " Lives: " << getLives() << " Health: " << m_player->getHP() << " Sprays: " << m_player->getSpray() << " Flames: " << m_player->getFlame();
+    oss << "Score: " << setfill('0') << setw(6) << getScore() << setw(0) << "  Level: " << getLevel() << "  Lives: " << getLives() << "  Health: " << m_player->getHP() << "  Sprays: " << m_player->getSpray() << "  Flames: " << m_player->getFlame();
     
     //add new stuff here in part 2
     
@@ -112,12 +119,18 @@ int StudentWorld::move()
 
 void StudentWorld::cleanUp()
 {
-    for (list<Actor*>::iterator i = m_list.begin(); i != m_list.end(); i++) {
-        delete *i;
+    for (list<Actor*>::iterator i = m_list.begin(); i != m_list.end(); ) {
+        if (*i != nullptr) {
+            delete *i;
+            *i = nullptr;
+        }
         i = m_list.erase(i);
     }
     
-    delete m_player;
+    if (m_player != nullptr) {
+        delete m_player;
+        m_player = nullptr;
+    }
 }
 
 bool StudentWorld::damageDamageable(Actor* ap, int n) {
@@ -132,15 +145,28 @@ void StudentWorld::addFlame(int x, int y, Direction dir) { m_list.push_back(new 
 
 void StudentWorld::addSpray(int x, int y, Direction dir) { m_list.push_back(new SprayProj(x, y, dir, this)); }
 
-void addRegSal(int x, int y) {}
+void StudentWorld::addRegSal(int x, int y) {}
 
-void addAggSal(int x, int y) {}
+void StudentWorld::addAggSal(int x, int y) {}
 
-void addEColi(int x, int y) {}
+void StudentWorld::addEColi(int x, int y) { m_list.push_back(new EColi(x, y, this)); }
+
+void StudentWorld::addFood(int x, int y) { m_list.push_back(new Food(x, y, this)); }
 
 void StudentWorld::damageSocrates(int n) { m_player->damage(n); }
 
 bool StudentWorld::overlapSocrates(Actor* ap) { return overlap(ap, m_player); }
+
+double StudentWorld::calcDistSocrates(Actor* ap) { return calcDistance(ap, m_player); }
+
+Direction StudentWorld::calcAngleSocrates(Actor* ap) {
+    Direction theta = atan((m_player->getY() - ap->getY()) / (m_player->getX() - ap->getX())) * 180 / M_PI;
+    if (m_player->getX() - ap->getX() < 0)
+        theta += 180;
+    else if (m_player->getY() - ap->getY() < 0)
+        theta += 360;
+    return theta;
+}
 
 bool StudentWorld::attemptEat(Actor* ap) {
     for(list<Actor*>::iterator i = m_list.begin(); i != m_list.end(); i++) {
@@ -149,5 +175,17 @@ bool StudentWorld::attemptEat(Actor* ap) {
     }
     return false;
 }
+
+bool StudentWorld::attemptMove(Bacteria* bp, Direction dir, double dist) {
+    for(list<Actor*>::iterator i = m_list.begin(); i != m_list.end(); i++) {
+        if ((*i)->blocks() && movementOverlap(bp->getX() + dist * cos(dir * M_PI / 180), bp->getY() + dist * sin(dir * M_PI / 180), *i))
+            return false;
+    }
+    return true;
+}
+
+void StudentWorld::incBacteriaCount() { m_nBacteria++; }
+
+void StudentWorld::decBacteriaCount() { m_nBacteria--; }
 
 StudentWorld::~StudentWorld() { cleanUp(); }

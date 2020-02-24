@@ -9,17 +9,25 @@ class StudentWorld;
 
 class Actor : public GraphObject { //Part 1
 public:
-    Actor(int ID, int x, int y, Direction dir, int d, bool ind, StudentWorld* w_ptr);
+    Actor(int ID, int x, int y, Direction dir, int d, int hp, bool ind, StudentWorld* w_ptr);
     virtual void doSomething() = 0;
     virtual ~Actor();
+    
+    //indicators
     bool isAlive();
-    void setDead();
     StudentWorld* getWorld();
-    virtual bool damage(int n) = 0; //true if damageable
-    virtual bool eat(); //only food can be eaten
     virtual bool blocks();
     virtual bool allowsOverlap();
+    
+    //accessors
+    int getHP();
+    
+    //mutators
+    void setDead();
+    virtual bool damage(int n); //true if damageable
+    virtual bool eat(); //only food can be eaten
 private:
+    int m_hp;
     bool m_isAlive;
     StudentWorld* m_world;
 };
@@ -28,15 +36,12 @@ class Socrates : public Actor { //Part 1
 public:
     Socrates(StudentWorld* w_ptr);
     virtual void doSomething();
-    ~Socrates();
-    bool damage(int n);
+    virtual ~Socrates();
     int getSpray();
     int getFlame();
-    int getHP();
 private:
     int m_spray;
     int m_flame;
-    int m_hp;
 };
 
 class Bacteria : public Actor {
@@ -45,47 +50,47 @@ public:
     virtual void doSomething();
     virtual void doSpecificThing() = 0;
     virtual void addBacteria(int x, int y) = 0;
-    virtual bool damage(int n) = 0; //play sound
-    ~Bacteria();
+    virtual bool damage(int n) = 0; //play sound, decrease the bacteria counter in m_world
+    virtual ~Bacteria();
 private:
-    int m_hp;
     int m_planDist;
     int m_amtDmg;
+    int m_moveDist;
     int m_foodEaten;
 };
 
 class Salmonella : public Bacteria {
-    Salmonella(int x, int y);
-    virtual void doSomething();
+    Salmonella(int x, int y, StudentWorld* w_ptr);
     virtual void doSpecificThing() = 0;
     virtual void addBacteria(int x, int y);
     virtual bool damage(int n); //play sound
-    ~Salmonella();
+    virtual ~Salmonella();
 };
 
 class AggSal : public Salmonella {
-    AggSal(int x, int y);
-    virtual void doSomething();
+public:
+    AggSal(int x, int y, StudentWorld* w_ptr);
     virtual void doSpecificThing() = 0;
     virtual void addBacteria(int x, int y);
-    ~AggSal();
+    virtual ~AggSal();
 };
 
 class RegSal : public Salmonella {
-    RegSal(int x, int y);
+public:
+    RegSal(int x, int y, StudentWorld* w_ptr);
     virtual void doSomething();
     virtual void doSpecificThing() = 0;
     virtual void addBacteria(int x, int y);
-    ~RegSal();
+    virtual ~RegSal();
 };
 
 class EColi : public Bacteria {
-    EColi(int x, int y);
-    virtual void doSomething();
-    virtual void doSpecificThing() = 0;
+public:
+    EColi(int x, int y, StudentWorld* w_ptr);
+    virtual void doSpecificThing();
     virtual void addBacteria(int x, int y);
     virtual bool damage(int n); //play sound
-    ~EColi();
+    virtual ~EColi();
 };
 
 class Pit : public Actor {
@@ -95,11 +100,11 @@ class Pit : public Actor {
 class Projectile : public Actor {
 public:
     Projectile(int xFromCenter, int yFromCenter, Direction dir, int ID, int max, StudentWorld* w_ptr);
-    bool damage(int n);
     virtual void doSomething() = 0;
     int getMaxTravel();
     int getDistTravelled();
     void addDist(int n);
+    virtual bool damage(int n); //not damageable! needs override
     virtual ~Projectile();
 private:
     int m_maxTravel;
@@ -110,22 +115,21 @@ class FlameProj : public Projectile {
 public:
     FlameProj(int xFromCenter, int yFromCenter, Direction dir, StudentWorld* w_ptr);
     virtual void doSomething();
-    ~FlameProj();
+    virtual ~FlameProj();
 };
 
 class SprayProj : public Projectile {
 public:
     SprayProj(int xFromCenter, int yFromCenter, Direction dir, StudentWorld* w_ptr);
     virtual void doSomething();
-    ~SprayProj();
+    virtual ~SprayProj();
 };
 
 class Dirt : public Actor { //Part 1
 public:
     Dirt(int xFromCenter, int yFromCenter, StudentWorld* w_ptr);
     virtual void doSomething();
-    bool damage(int n);
-    ~Dirt();
+    virtual ~Dirt();
     bool blocks();
     bool allowsOverlap();
 };
@@ -135,8 +139,7 @@ public:
     Food(int xFromCenter, int yFromCenter, StudentWorld* w_ptr);
     virtual void doSomething();
     virtual bool eat(); //overrides default
-    bool damage(int n);
-    ~Food();
+    virtual ~Food();
 };
 
 class Goodie : public Actor {
@@ -164,6 +167,8 @@ void polarToRect(double r, double theta, double& x, double& y);
 void rectToPolar(double r, double theta, double& x, double& y);
 
 void movePolar(Actor* ap, double& r, double& theta);
+
+int calcDistance(Actor* a1, Actor* a2);
 
 void calcNewXY(int& x, int& y);
 
