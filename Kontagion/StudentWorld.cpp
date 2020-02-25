@@ -62,8 +62,8 @@ int StudentWorld::init()
     m_nPit = getLevel();
     m_nFood = min(getLevel() * 5, 25);
     m_nDirt = max(180 - getLevel() * 20, 20);
-    m_nBacteria = 0;
-    m_chanceFungus = max(510 - getLevel() * 10, 200);
+    m_nBacteria = 1;
+    m_chanceFungus = 1;
     m_chanceGoodie = max(510 - getLevel() * 10, 250);
     
     int x, y;
@@ -119,8 +119,8 @@ int StudentWorld::move()
     
     int r1 = randInt(0, m_chanceFungus - 1);
     if (r1 == 0) {
-//        int rTheta = randInt(0, 359);
-//        m_list.push_back(new Fungi(VIEW_RADIUS * cos(rTheta), VIEW_RADIUS * sin(rTheta), this));
+        int rTheta = randInt(0, 359);
+        m_list.push_back(new Fungus(VIEW_RADIUS * cos(rTheta), VIEW_RADIUS * sin(rTheta), this));
         return GWSTATUS_CONTINUE_GAME;
     }
     int r2 = randInt(0, m_chanceGoodie - 2);

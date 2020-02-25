@@ -311,6 +311,7 @@ void Goodie::doSomething() {
     m_lifeTime--;
     if (getWorld()->overlapSocrates(this)) {
         getWorld()->increaseScore(m_award);
+        setDead();
         getWorld()->playSound(SOUND_GOT_GOODIE);
         doSpecificThing();
     }
@@ -325,29 +326,27 @@ Goodie::~Goodie() {}
 //Health Goodie
 HealthG::HealthG(int xFromCenter, int yFromcenter, StudentWorld* w_ptr) : Goodie(xFromCenter, yFromcenter, IID_RESTORE_HEALTH_GOODIE, 250, w_ptr) {}
 
-void HealthG::doSpecificThing() {
-    getWorld()->restoreSocrates();
-    setDead();
-}
+void HealthG::doSpecificThing() { getWorld()->restoreSocrates(); }
 
 HealthG::~HealthG() {}
 
 //Flame Goodie
 FlameG::FlameG(int xFromCenter, int yFromcenter, StudentWorld* w_ptr) : Goodie(xFromCenter, yFromcenter, IID_FLAME_THROWER_GOODIE, 300, w_ptr) {}
 
-void FlameG::doSpecificThing() {
-    getWorld()->giveFlameToSocrates(5);
-    setDead();
-}
+void FlameG::doSpecificThing() { getWorld()->giveFlameToSocrates(5); }
 
 FlameG::~FlameG() {}
 
 //Life Goodie
 LifeG::LifeG(int xFromCenter, int yFromcenter, StudentWorld* w_ptr) : Goodie(xFromCenter, yFromcenter, IID_EXTRA_LIFE_GOODIE, 500, w_ptr) {}
 
-void LifeG::doSpecificThing() {
-    getWorld()->incLives();
-    setDead();
-}
+void LifeG::doSpecificThing() { getWorld()->incLives(); }
 
 LifeG::~LifeG() {}
+
+//Fungus
+Fungus::Fungus(int xFromCenter, int yFromcenter, StudentWorld* w_ptr) : Goodie(xFromCenter, yFromcenter, IID_FUNGUS, -50, w_ptr) {}
+
+void Fungus::doSpecificThing() { getWorld()->damageSocrates(50); }
+
+Fungus::~Fungus() {}

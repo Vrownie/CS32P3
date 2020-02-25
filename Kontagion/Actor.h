@@ -145,7 +145,7 @@ public:
     virtual ~Food();
 };
 
-class Goodie : public Actor {
+class Goodie : public Actor { //also includes Fungus
 public:
     Goodie(int xFromCenter, int yFromCenter, int ID, int awardPt, StudentWorld* w_ptr);
     virtual void doSomething();
@@ -178,8 +178,11 @@ public:
     virtual ~LifeG();
 };
 
-class Fungi : public Actor {
-    
+class Fungus : public Goodie {
+public:
+    Fungus(int xFromCenter, int yFromcenter, StudentWorld* w_ptr);
+    virtual void doSpecificThing();
+    virtual ~Fungus();
 };
 
 void polarToRect(double r, double theta, double& x, double& y);
