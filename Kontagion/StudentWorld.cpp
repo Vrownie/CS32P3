@@ -77,8 +77,6 @@ int StudentWorld::init()
         m_list.push_back(new Dirt(x, y, this));
     }
     
-    m_list.push_back(new EColi(128, 128, this)); //testing
-    
     return GWSTATUS_CONTINUE_GAME;
 }
 
