@@ -60,7 +60,11 @@ bool Actor::eat() { return false; }
 
 int Actor::getHP() { return m_hp; }
 
+void Actor::setHP(int n) { m_hp = n; }
+
 bool Actor::damage(int n) {
+    if (n <= 0) return false;
+    
     m_hp -= n;
     if (m_hp <= 0) setDead();
     return true;
@@ -123,6 +127,10 @@ void Socrates::doSomething() {
     }
 }
 
+void Socrates::restoreHP() { setHP(100); }
+
+void Socrates::addFlame(int n) { m_flame += n; }
+
 int Socrates::getSpray() { return m_spray; }
 
 int Socrates::getFlame() { return m_flame; }
@@ -158,9 +166,7 @@ Projectile::Projectile(int xFromCenter, int yFromCenter, Direction dir, int ID, 
     m_distTravelled = 0;
 }
 
-bool Projectile::damage(int n) {
-    return false;
-}
+bool Projectile::damage(int n) { return false; }
 
 int Projectile::getMaxTravel() { return m_maxTravel; }
 
@@ -292,3 +298,56 @@ bool EColi::damage(int n) {
 void EColi::addBacteria(int x, int y) { getWorld()->addEColi(x, y); }
 
 EColi::~EColi() {}
+
+//Goodie (virtual)
+Goodie::Goodie(int xFromCenter, int yFromCenter, int ID, int awardPts, StudentWorld* w_ptr) : Actor(ID, VIEW_WIDTH / 2 + xFromCenter, VIEW_HEIGHT / 2 + yFromCenter, 0, 1, 0, true, w_ptr){
+    m_lifeTime = std::max(rand() % (300 - 10 * getWorld()->getLevel()), 50);
+    m_award = awardPts;
+}
+
+void Goodie::doSomething() {
+    if (!isAlive()) return;
+    
+    m_lifeTime--;
+    if (getWorld()->overlapSocrates(this)) {
+        getWorld()->increaseScore(m_award);
+        getWorld()->playSound(SOUND_GOT_GOODIE);
+        doSpecificThing();
+    }
+    
+    if (m_lifeTime == 0) setDead();
+}
+
+bool Goodie::damage(int n) { return false; }
+
+Goodie::~Goodie() {}
+
+//Health Goodie
+HealthG::HealthG(int xFromCenter, int yFromcenter, StudentWorld* w_ptr) : Goodie(xFromCenter, yFromcenter, IID_RESTORE_HEALTH_GOODIE, 250, w_ptr) {}
+
+void HealthG::doSpecificThing() {
+    getWorld()->restoreSocrates();
+    setDead();
+}
+
+HealthG::~HealthG() {}
+
+//Flame Goodie
+FlameG::FlameG(int xFromCenter, int yFromcenter, StudentWorld* w_ptr) : Goodie(xFromCenter, yFromcenter, IID_FLAME_THROWER_GOODIE, 300, w_ptr) {}
+
+void FlameG::doSpecificThing() {
+    getWorld()->giveFlameToSocrates(5);
+    setDead();
+}
+
+FlameG::~FlameG() {}
+
+//Life Goodie
+LifeG::LifeG(int xFromCenter, int yFromcenter, StudentWorld* w_ptr) : Goodie(xFromCenter, yFromcenter, IID_EXTRA_LIFE_GOODIE, 500, w_ptr) {}
+
+void LifeG::doSpecificThing() {
+    getWorld()->incLives();
+    setDead();
+}
+
+LifeG::~LifeG() {}

@@ -63,8 +63,13 @@ int StudentWorld::init()
     m_nFood = min(getLevel() * 5, 25);
     m_nDirt = max(180 - getLevel() * 20, 20);
     m_nBacteria = 0;
+    m_chanceFungus = max(510 - getLevel() * 10, 200);
+    m_chanceGoodie = max(510 - getLevel() * 10, 250);
     
     int x, y;
+    
+    //add pits here
+    
     for (int n = 0; n < m_nFood; n++) {
         //check overlap here in part 2
         getValidCoords(m_list, x, y);
@@ -112,6 +117,37 @@ int StudentWorld::move()
     
     setGameStatText(oss.str());
     
+    int r1 = randInt(0, m_chanceFungus - 1);
+    if (r1 == 0) {
+//        int rTheta = randInt(0, 359);
+//        m_list.push_back(new Fungi(VIEW_RADIUS * cos(rTheta), VIEW_RADIUS * sin(rTheta), this));
+        return GWSTATUS_CONTINUE_GAME;
+    }
+    int r2 = randInt(0, m_chanceGoodie - 2);
+    if (r2 == 0) {
+        int rTheta = randInt(0, 359);
+        int a = randInt(0, 9);
+        switch (a) {
+                case 0:
+                case 1:
+                case 2:
+                case 3:
+                case 4:
+                case 5:
+                    m_list.push_back(new HealthG(VIEW_RADIUS * cos(rTheta), VIEW_RADIUS * sin(rTheta), this));
+                    break;
+                case 6:
+                case 7:
+                case 8:
+                    m_list.push_back(new FlameG(VIEW_RADIUS * cos(rTheta), VIEW_RADIUS * sin(rTheta), this));
+                    break;
+                case 9:
+                    m_list.push_back(new LifeG(VIEW_RADIUS * cos(rTheta), VIEW_RADIUS * sin(rTheta), this));
+                    break;
+        }
+        return GWSTATUS_CONTINUE_GAME;
+    }
+    
     return GWSTATUS_CONTINUE_GAME;
 }
 
@@ -151,7 +187,11 @@ void StudentWorld::addEColi(int x, int y) { m_list.push_back(new EColi(x, y, thi
 
 void StudentWorld::addFood(int x, int y) { m_list.push_back(new Food(x, y, this)); }
 
+void StudentWorld::restoreSocrates() { m_player->restoreHP(); }
+
 void StudentWorld::damageSocrates(int n) { m_player->damage(n); }
+
+void StudentWorld::giveFlameToSocrates(int n) { m_player->addFlame(n); }
 
 bool StudentWorld::overlapSocrates(Actor* ap) { return overlap(ap, m_player); }
 

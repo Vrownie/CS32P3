@@ -22,7 +22,9 @@ public:
     void addAggSal(int x, int y);
     void addEColi(int x, int y);
     void addFood(int x, int y);
+    void restoreSocrates();
     void damageSocrates(int n);
+    void giveFlameToSocrates(int n);
     bool overlapSocrates(Actor* ap);
     double calcDistSocrates(Actor* ap);
     Direction calcAngleSocrates(Actor* ap);
@@ -38,6 +40,8 @@ private:
     int m_nFood;
     int m_nDirt;
     int m_nBacteria;
+    int m_chanceFungus;
+    int m_chanceGoodie;
 };
 
 void getValidCoords(Actor* aa, int& x, int& y);

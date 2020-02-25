@@ -23,6 +23,7 @@ public:
     int getHP();
     
     //mutators
+    void setHP(int n);
     void setDead();
     virtual bool damage(int n); //true if damageable
     virtual bool eat(); //only food can be eaten
@@ -37,6 +38,8 @@ public:
     Socrates(StudentWorld* w_ptr);
     virtual void doSomething();
     virtual ~Socrates();
+    void restoreHP();
+    void addFlame(int n);
     int getSpray();
     int getFlame();
 private:
@@ -143,19 +146,36 @@ public:
 };
 
 class Goodie : public Actor {
-    
+public:
+    Goodie(int xFromCenter, int yFromCenter, int ID, int awardPt, StudentWorld* w_ptr);
+    virtual void doSomething();
+    virtual void doSpecificThing() = 0;
+    virtual bool damage(int n);
+    virtual ~Goodie();
+private:
+    int m_lifeTime;
+    int m_award;
 };
 
 class HealthG : public Goodie {
-    
+public:
+    HealthG(int xFromCenter, int yFromcenter, StudentWorld* w_ptr);
+    virtual void doSpecificThing();
+    virtual ~HealthG();
 };
 
 class FlameG : public Goodie {
-    
+public:
+    FlameG(int xFromCenter, int yFromcenter, StudentWorld* w_ptr);
+    virtual void doSpecificThing();
+    virtual ~FlameG();
 };
 
 class LifeG : public Goodie {
-    
+public:
+    LifeG(int xFromCenter, int yFromcenter, StudentWorld* w_ptr);
+    virtual void doSpecificThing();
+    virtual ~LifeG();
 };
 
 class Fungi : public Actor {
