@@ -68,7 +68,10 @@ int StudentWorld::init()
     
     int x, y;
     
-    //add pits here
+    for (int n = 0; n < m_nPit; n++) {
+        getValidCoords(m_list, x, y);
+        m_list.push_back(new Pit(x, y, this));
+    }
     
     for (int n = 0; n < m_nFood; n++) {
         getValidCoords(m_list, x, y);
@@ -94,7 +97,7 @@ int StudentWorld::move()
             playSound(SOUND_PLAYER_DIE);
             return GWSTATUS_PLAYER_DIED;
         }
-        if(m_nBacteria == 0) {
+        if(m_nBacteria == 0 && m_nPit == 0) {
             playSound(SOUND_FINISHED_LEVEL);
             return GWSTATUS_FINISHED_LEVEL;
         }
@@ -109,9 +112,8 @@ int StudentWorld::move()
     }
     
     ostringstream oss;
-    oss << "Score: " << setfill('0') << setw(6) << getScore() << setw(0) << "  Level: " << getLevel() << "  Lives: " << getLives() << "  Health: " << m_player->getHP() << "  Sprays: " << m_player->getSpray() << "  Flames: " << m_player->getFlame();
     
-    //add new stuff here in part 2
+    oss << "Score: " << setfill('0') << setw(6) << getScore() << setw(0) << "  Level: " << getLevel() << "  Lives: " << getLives() << "  Health: " << m_player->getHP() << "  Sprays: " << m_player->getSpray() << "  Flames: " << m_player->getFlame();
     
     setGameStatText(oss.str());
     
@@ -242,5 +244,7 @@ bool StudentWorld::attemptMove(Bacteria* bp, Direction dir, double dist) {
 void StudentWorld::incBacteriaCount() { m_nBacteria++; }
 
 void StudentWorld::decBacteriaCount() { m_nBacteria--; }
+
+void StudentWorld::decPitCount() { m_nPit--; }
 
 StudentWorld::~StudentWorld() { cleanUp(); }

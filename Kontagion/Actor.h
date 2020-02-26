@@ -43,6 +43,7 @@ public:
     void addFlame(int n);
     int getSpray();
     int getFlame();
+    virtual bool damage(int n);
 private:
     int m_spray;
     int m_flame;
@@ -104,19 +105,28 @@ public:
 };
 
 class Pit : public Actor {
-    
+public:
+    Pit(int x, int y, StudentWorld* w_ptr);
+    virtual void doSomething();
+    virtual bool damage(int n); //overrides, cannot be damaged
+    virtual ~Pit();
+private:
+    int m_nEColi;
+    int m_nRegSal;
+    int m_nAggSal;
 };
 
 class Projectile : public Actor {
 public:
-    Projectile(int xFromCenter, int yFromCenter, Direction dir, int ID, int max, StudentWorld* w_ptr);
-    virtual void doSomething() = 0;
+    Projectile(int xFromCenter, int yFromCenter, Direction dir, int ID, int max, int dmg, StudentWorld* w_ptr);
+    virtual void doSomething();
     int getMaxTravel();
     int getDistTravelled();
     void addDist(int n);
     virtual bool damage(int n); //not damageable! needs override
     virtual ~Projectile();
 private:
+    int m_amtDmg;
     int m_maxTravel;
     int m_distTravelled;
 };
@@ -124,14 +134,12 @@ private:
 class FlameProj : public Projectile {
 public:
     FlameProj(int xFromCenter, int yFromCenter, Direction dir, StudentWorld* w_ptr);
-    virtual void doSomething();
     virtual ~FlameProj();
 };
 
 class SprayProj : public Projectile {
 public:
     SprayProj(int xFromCenter, int yFromCenter, Direction dir, StudentWorld* w_ptr);
-    virtual void doSomething();
     virtual ~SprayProj();
 };
 

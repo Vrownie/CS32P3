@@ -9,10 +9,10 @@
 /* Begin PBXBuildFile section */
 		4B91F8BF2033F3F8003AFA78 /* GameWorld.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4B91F8B12033F3F7003AFA78 /* GameWorld.cpp */; };
 		4B91F8C02033F3F8003AFA78 /* StudentWorld.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4B91F8B22033F3F7003AFA78 /* StudentWorld.cpp */; };
-		4B91F8C12033F3F8003AFA78 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4B91F8B42033F3F7003AFA78 /* main.cpp */; };
 		4B91F8C22033F3F8003AFA78 /* Actor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4B91F8B62033F3F7003AFA78 /* Actor.cpp */; };
 		4B91F8C32033F3F8003AFA78 /* GameController.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4B91F8B82033F3F7003AFA78 /* GameController.cpp */; };
 		4B91F8C62034176C003AFA78 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4B91F8C52034176C003AFA78 /* OpenGL.framework */; };
+		C5055A0924068D4E000CFEAE /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4B91F8B42033F3F7003AFA78 /* main.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -165,7 +165,7 @@
 				4B91F8C32033F3F8003AFA78 /* GameController.cpp in Sources */,
 				4B91F8C02033F3F8003AFA78 /* StudentWorld.cpp in Sources */,
 				4B91F8BF2033F3F8003AFA78 /* GameWorld.cpp in Sources */,
-				4B91F8C12033F3F8003AFA78 /* main.cpp in Sources */,
+				C5055A0924068D4E000CFEAE /* main.cpp in Sources */,
 				4B91F8C22033F3F8003AFA78 /* Actor.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

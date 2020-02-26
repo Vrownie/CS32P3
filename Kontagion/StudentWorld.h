@@ -33,6 +33,7 @@ public:
     bool attemptMove(Bacteria* bp, Direction dir, double dist);
     void incBacteriaCount();
     void decBacteriaCount();
+    void decPitCount();
     ~StudentWorld();
 private:
     std::list<Actor*> m_list;

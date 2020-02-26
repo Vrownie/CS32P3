@@ -42,7 +42,7 @@ void calcNewXY(int& x, int& y) {
 bool isValidCoord(int x, int y) { return sqrt(pow(x - VIEW_WIDTH / 2, 2) + pow(y - VIEW_HEIGHT / 2, 2)) < VIEW_RADIUS; }
 
 //Actor
-Actor::Actor(int ID, int x, int y, Direction dir, int d, int hp, bool ind,  StudentWorld* w_ptr) : GraphObject(ID, x, y, dir, d) {
+Actor::Actor(int ID, int x, int y, Direction dir, int d, int hp, bool ind, StudentWorld* w_ptr) : GraphObject(ID, x, y, dir, d) {
     m_hp = hp;
     m_isAlive = ind;
     m_world = w_ptr;
@@ -139,6 +139,13 @@ int Socrates::getSpray() { return m_spray; }
 
 int Socrates::getFlame() { return m_flame; }
 
+bool Socrates::damage(int n) {
+    Actor::damage(n);
+    if (isAlive()) getWorld()->playSound(SOUND_PLAYER_HURT);
+    else getWorld()->playSound(SOUND_PLAYER_DIE);
+    return true;
+}
+
 Socrates::~Socrates() {}
 
 //Dirt
@@ -167,25 +174,13 @@ bool Food::eat() {
 Food::~Food() {}
 
 //Projectile (virtual)
-Projectile::Projectile(int xFromCenter, int yFromCenter, Direction dir, int ID, int max, StudentWorld* w_ptr) : Actor(ID, VIEW_WIDTH / 2 + xFromCenter, VIEW_HEIGHT / 2 + yFromCenter, dir, 1, -1, true, w_ptr) {
+Projectile::Projectile(int xFromCenter, int yFromCenter, Direction dir, int ID, int max, int dmg,  StudentWorld* w_ptr) : Actor(ID, VIEW_WIDTH / 2 + xFromCenter, VIEW_HEIGHT / 2 + yFromCenter, dir, 1, -1, true, w_ptr) {
     m_maxTravel = max;
     m_distTravelled = 0;
+    m_amtDmg = dmg;
 }
 
-bool Projectile::damage(int n) { return false; }
-
-int Projectile::getMaxTravel() { return m_maxTravel; }
-
-int Projectile::getDistTravelled() { return m_distTravelled; }
-
-void Projectile::addDist(int n) { m_distTravelled += n; }
-
-Projectile::~Projectile() {}
-
-//Flame Projectile
-FlameProj::FlameProj(int xFromCenter, int yFromCenter, Direction dir, StudentWorld* w_ptr) : Projectile(xFromCenter, yFromCenter, dir, IID_FLAME, 32, w_ptr) {}
-
-void FlameProj::doSomething() {
+void Projectile::doSomething() {
     if (!isAlive()) return;
     
     if(getWorld()->damageDamageable(this, 5)) {
@@ -202,28 +197,24 @@ void FlameProj::doSomething() {
     }
 }
 
+bool Projectile::damage(int n) { return false; }
+
+int Projectile::getMaxTravel() { return m_maxTravel; }
+
+int Projectile::getDistTravelled() { return m_distTravelled; }
+
+void Projectile::addDist(int n) { m_distTravelled += n; }
+
+Projectile::~Projectile() {}
+
+//Flame Projectile
+FlameProj::FlameProj(int xFromCenter, int yFromCenter, Direction dir, StudentWorld* w_ptr) : Projectile(xFromCenter, yFromCenter, dir, IID_FLAME, 32, 5, w_ptr) {}
+
 FlameProj::~FlameProj() {}
 
 //Spray Projectile
 
-SprayProj::SprayProj(int xFromCenter, int yFromCenter, Direction dir, StudentWorld* w_ptr) : Projectile(xFromCenter, yFromCenter, dir, IID_SPRAY, 112, w_ptr) {}
-
-void SprayProj::doSomething() {
-    if (!isAlive()) return;
-    
-    if(getWorld()->damageDamageable(this, 2)) {
-        setDead();
-        return;
-    }
-    
-    moveAngle(getDirection(), 2*SPRITE_RADIUS);
-    addDist(2*SPRITE_RADIUS);
-    
-    if(getDistTravelled() == getMaxTravel()) {
-        setDead();
-        return;
-    }
-}
+SprayProj::SprayProj(int xFromCenter, int yFromCenter, Direction dir, StudentWorld* w_ptr) : Projectile(xFromCenter, yFromCenter, dir, IID_SPRAY, 112, 2, w_ptr) {}
 
 SprayProj::~SprayProj() {}
 
@@ -275,9 +266,8 @@ void Bacteria::doSomething() {
 bool Bacteria::damage(int n) {
     Actor::damage(n);
     if(!isAlive()) {
-        getWorld()->decBacteriaCount();
-        playDeadSound(); //different for each bacteria
         getWorld()->increaseScore(100);
+        playDeadSound();
         if(randInt(0, 1) == 0)
             getWorld()->addFood(getX(), getY());
     } else
@@ -289,7 +279,7 @@ int Bacteria::getPlanDist() { return m_planDist; }
 
 void Bacteria::setPlanDist(int newPlan) { m_planDist = newPlan; }
 
-Bacteria::~Bacteria() {}
+Bacteria::~Bacteria() { getWorld()->decBacteriaCount(); } //different for each bacteria
 
 //EColi
 EColi::EColi(int x, int y, StudentWorld* w_ptr) : Bacteria(x, y, IID_ECOLI, w_ptr, 5, 0, 4) {}
@@ -383,7 +373,7 @@ void AggSal::addBacteria(int x, int y) { getWorld()->addAggSal(x, y); }
 AggSal::~AggSal() {}
 
 //Goodie (virtual)
-Goodie::Goodie(int xFromCenter, int yFromCenter, int ID, int awardPts, StudentWorld* w_ptr) : Actor(ID, VIEW_WIDTH / 2 + xFromCenter, VIEW_HEIGHT / 2 + yFromCenter, 0, 1, 0, true, w_ptr){
+Goodie::Goodie(int xFromCenter, int yFromCenter, int ID, int awardPts, StudentWorld* w_ptr) : Actor(ID, VIEW_WIDTH / 2 + xFromCenter, VIEW_HEIGHT / 2 + yFromCenter, 0, 1, -1, true, w_ptr){
     m_lifeTime = std::max(rand() % (300 - 10 * getWorld()->getLevel()), 50);
     m_award = awardPts;
 }
@@ -437,3 +427,77 @@ void Fungus::doSpecificThing() { getWorld()->damageSocrates(50); }
 void Fungus::playSound() {}
 
 Fungus::~Fungus() {}
+
+//Pit
+Pit::Pit(int xFromCenter, int yFromCenter, StudentWorld* w_ptr) : Actor(IID_PIT, VIEW_WIDTH / 2 + xFromCenter, VIEW_HEIGHT / 2 + yFromCenter, 0, 1, -1, true, w_ptr) {
+    m_nRegSal = 5;
+    m_nAggSal = 3;
+    m_nEColi = 2;
+}
+
+void Pit::doSomething() {
+    if (m_nAggSal == 0 && m_nRegSal == 0 && m_nEColi == 0) {
+        setDead();
+        return;
+    }
+    
+    if (randInt(0, 49) == 0) {
+        if (m_nRegSal != 0 && m_nAggSal == 0 && m_nEColi == 0) {
+            getWorld()->addRegSal(getX(), getY());
+            m_nRegSal--;
+        } else if (m_nRegSal == 0 && m_nAggSal != 0 && m_nEColi == 0) {
+            getWorld()->addAggSal(getX(), getY());
+            m_nAggSal--;
+        } else if (m_nRegSal == 0 && m_nAggSal == 0 && m_nEColi != 0) {
+            getWorld()->addEColi(getX(), getY());
+            m_nEColi--;
+        } else if (m_nRegSal == 0 && m_nAggSal != 0 && m_nEColi != 0) {
+            if (randInt(0,1) == 0) {
+                getWorld()->addAggSal(getX(), getY());
+                m_nAggSal--;
+            } else {
+                getWorld()->addEColi(getX(), getY());
+                m_nEColi--;
+            }
+        } else if (m_nRegSal != 0 && m_nAggSal == 0 && m_nEColi != 0) {
+            if (randInt(0,1) == 0) {
+                getWorld()->addRegSal(getX(), getY());
+                m_nRegSal--;
+            } else {
+                getWorld()->addEColi(getX(), getY());
+                m_nEColi--;
+            }
+        } else if (m_nRegSal != 0 && m_nAggSal != 0 && m_nEColi == 0) {
+            if (randInt(0,1) == 0) {
+                getWorld()->addRegSal(getX(), getY());
+                m_nRegSal--;
+            } else {
+                getWorld()->addAggSal(getX(), getY());
+                m_nAggSal--;
+            }
+        } else {
+            int rand = randInt(0, 2);
+            switch (rand) {
+                case 0: {
+                    getWorld()->addRegSal(getX(), getY());
+                    m_nRegSal--;
+                    break;
+                }
+                case 1: {
+                    getWorld()->addAggSal(getX(), getY());
+                    m_nAggSal--;
+                    break;
+                }
+                case 2: {
+                    getWorld()->addEColi(getX(), getY());
+                    m_nEColi--;
+                    break;
+                }
+            }
+        }
+    }
+}
+
+bool Pit::damage(int n) { return false; }
+
+Pit::~Pit() { getWorld()->decPitCount(); }
