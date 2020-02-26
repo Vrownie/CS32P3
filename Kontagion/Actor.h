@@ -18,6 +18,7 @@ public:
     StudentWorld* getWorld();
     virtual bool blocks();
     virtual bool allowsOverlap();
+    virtual bool edible();
     
     //accessors
     int getHP();
@@ -53,8 +54,12 @@ public:
     virtual void doSomething();
     virtual void doSpecificThing() = 0;
     virtual void addBacteria(int x, int y) = 0;
-    virtual bool damage(int n) = 0; //play sound, decrease the bacteria counter in m_world
+    virtual bool damage(int n); //play sound, decrease the bacteria counter in m_world
+    virtual void playHurtSound() = 0;
+    virtual void playDeadSound() = 0;
     virtual ~Bacteria();
+    int getPlanDist();
+    void setPlanDist(int newPlan);
 private:
     int m_planDist;
     int m_amtDmg;
@@ -63,28 +68,29 @@ private:
 };
 
 class Salmonella : public Bacteria {
-    Salmonella(int x, int y, StudentWorld* w_ptr);
-    virtual void doSpecificThing() = 0;
-    virtual void addBacteria(int x, int y);
-    virtual bool damage(int n); //play sound
-    virtual ~Salmonella();
-};
-
-class AggSal : public Salmonella {
 public:
-    AggSal(int x, int y, StudentWorld* w_ptr);
-    virtual void doSpecificThing() = 0;
-    virtual void addBacteria(int x, int y);
-    virtual ~AggSal();
+    Salmonella(int x, int y, StudentWorld* w_ptr, int hp, int amtdmg);
+    virtual void doSpecificThing();
+    virtual void addBacteria(int x, int y) = 0;
+    virtual void playHurtSound();
+    virtual void playDeadSound();
+    virtual ~Salmonella();
 };
 
 class RegSal : public Salmonella {
 public:
     RegSal(int x, int y, StudentWorld* w_ptr);
-    virtual void doSomething();
-    virtual void doSpecificThing() = 0;
     virtual void addBacteria(int x, int y);
     virtual ~RegSal();
+};
+
+class AggSal : public Salmonella {
+public:
+    AggSal(int x, int y, StudentWorld* w_ptr);
+    virtual void doSomething(); //overrides doSomething, adds an extra step
+    virtual void doSpecificThing(); //overrides Salmonella's, when needed
+    virtual void addBacteria(int x, int y);
+    virtual ~AggSal();
 };
 
 class EColi : public Bacteria {
@@ -92,7 +98,8 @@ public:
     EColi(int x, int y, StudentWorld* w_ptr);
     virtual void doSpecificThing();
     virtual void addBacteria(int x, int y);
-    virtual bool damage(int n); //play sound
+    virtual void playHurtSound();
+    virtual void playDeadSound();
     virtual ~EColi();
 };
 
@@ -141,6 +148,7 @@ class Food : public Actor {
 public:
     Food(int xFromCenter, int yFromCenter, StudentWorld* w_ptr);
     virtual void doSomething();
+    bool edible(); //overrides default
     virtual bool eat(); //overrides default
     virtual ~Food();
 };
@@ -150,6 +158,7 @@ public:
     Goodie(int xFromCenter, int yFromCenter, int ID, int awardPt, StudentWorld* w_ptr);
     virtual void doSomething();
     virtual void doSpecificThing() = 0;
+    virtual void playSound();
     virtual bool damage(int n);
     virtual ~Goodie();
 private:
@@ -182,6 +191,7 @@ class Fungus : public Goodie {
 public:
     Fungus(int xFromCenter, int yFromcenter, StudentWorld* w_ptr);
     virtual void doSpecificThing();
+    virtual void playSound(); //overrides Goodie's
     virtual ~Fungus();
 };
 
@@ -194,5 +204,7 @@ void movePolar(Actor* ap, double& r, double& theta);
 int calcDistance(Actor* a1, Actor* a2);
 
 void calcNewXY(int& x, int& y);
+
+bool isValidCoord(int x, int y);
 
 #endif // ACTOR_H_

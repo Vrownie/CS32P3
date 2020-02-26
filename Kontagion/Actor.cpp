@@ -39,6 +39,8 @@ void calcNewXY(int& x, int& y) {
     y += (y < VIEW_HEIGHT / 2) ? SPRITE_RADIUS : -SPRITE_RADIUS;
 }
 
+bool isValidCoord(int x, int y) { return sqrt(pow(x - VIEW_WIDTH / 2, 2) + pow(y - VIEW_HEIGHT / 2, 2)) < VIEW_RADIUS; }
+
 //Actor
 Actor::Actor(int ID, int x, int y, Direction dir, int d, int hp, bool ind,  StudentWorld* w_ptr) : GraphObject(ID, x, y, dir, d) {
     m_hp = hp;
@@ -55,6 +57,8 @@ StudentWorld* Actor::getWorld() { return m_world; }
 bool Actor::blocks() { return false; } //has to be a dirt
 
 bool Actor::allowsOverlap() { return false; } //has to be a dirt
+
+bool Actor::edible() { return false; } //has to be a food
 
 bool Actor::eat() { return false; }
 
@@ -152,6 +156,8 @@ bool Dirt::allowsOverlap() { return true; } //overrides Actor's allowsOverlap()
 Food::Food(int xFromCenter, int yFromCenter, StudentWorld* w_ptr) : Actor(IID_FOOD, VIEW_WIDTH / 2 + xFromCenter, VIEW_HEIGHT / 2 + yFromCenter, 90, 1, -1, true, w_ptr) {}
 
 void Food::doSomething() {}
+
+bool Food::edible() { return true; }
 
 bool Food::eat() {
     setDead();
@@ -258,12 +264,30 @@ void Bacteria::doSomething() {
             break;
         }
         case 3: {
+            m_foodEaten++;
             break;
         }
     }
     
     doSpecificThing();
 }
+
+bool Bacteria::damage(int n) {
+    Actor::damage(n);
+    if(!isAlive()) {
+        getWorld()->decBacteriaCount();
+        playDeadSound(); //different for each bacteria
+        getWorld()->increaseScore(100);
+        if(randInt(0, 1) == 0)
+            getWorld()->addFood(getX(), getY());
+    } else
+        playHurtSound();
+    return true;
+}
+
+int Bacteria::getPlanDist() { return m_planDist; }
+
+void Bacteria::setPlanDist(int newPlan) { m_planDist = newPlan; }
 
 Bacteria::~Bacteria() {}
 
@@ -283,21 +307,80 @@ void EColi::doSpecificThing() {
     }
 }
 
-bool EColi::damage(int n) {
-    Actor::damage(n);
-    if(!isAlive()) {
-        getWorld()->decBacteriaCount();
-        getWorld()->playSound(SOUND_ECOLI_DIE);
-        getWorld()->increaseScore(100);
-        if(randInt(0, 1) == 0)
-            getWorld()->addFood(getX(), getY());
-    }
-    return true;
-}
-
 void EColi::addBacteria(int x, int y) { getWorld()->addEColi(x, y); }
 
+void EColi::playHurtSound() { getWorld()->playSound(SOUND_ECOLI_HURT); }
+
+void EColi::playDeadSound() { getWorld()->playSound(SOUND_ECOLI_DIE); }
+
 EColi::~EColi() {}
+
+//Salmonella (virtual)
+Salmonella::Salmonella(int x, int y, StudentWorld* w_ptr, int hp, int amtDmg) : Bacteria(x, y, IID_SALMONELLA, w_ptr, hp, 0, amtDmg) {}
+
+void Salmonella::doSpecificThing() {
+    if(getPlanDist() > 0) {
+        setPlanDist(getPlanDist()-1);
+        if(getWorld()->attemptMove(this, getDirection(), 3) && isValidCoord(getX() + 3 * cos(getDirection() * M_PI / 180), getY() + 3 * sin(getDirection() * M_PI / 180)))
+            moveAngle(getDirection(), 3);
+        else {
+            setDirection(randInt(0, 359));
+            setPlanDist(10);
+        }
+    } else {
+        Direction dir;
+        if (getWorld()->findFood(this, 128, dir)) {
+            if(getWorld()->attemptMove(this, dir, 3) && isValidCoord(getX() + 3 * cos(dir * M_PI / 180), getY() + 3 * sin(dir * M_PI / 180))) {
+                setDirection(dir);
+                moveAngle(dir, 3);
+            }
+            else {
+                setDirection(randInt(0, 359));
+                setPlanDist(10);
+            }
+        } else {
+            setDirection(randInt(0, 359));
+            setPlanDist(10);
+        }
+    }
+}
+
+void Salmonella::playHurtSound() { getWorld()->playSound(SOUND_SALMONELLA_HURT); }
+
+void Salmonella::playDeadSound() { getWorld()->playSound(SOUND_SALMONELLA_DIE); }
+
+Salmonella::~Salmonella() {}
+
+//Regular Salmonella
+RegSal::RegSal(int x, int y, StudentWorld* w_ptr) : Salmonella(x, y, w_ptr, 4, 1) {}
+
+void RegSal::addBacteria(int x, int y) { getWorld()->addRegSal(x, y); }
+
+RegSal::~RegSal() {}
+
+//Aggressive Salmonella
+AggSal::AggSal(int x, int y, StudentWorld* w_ptr) : Salmonella(x, y, w_ptr, 10, 2){}
+
+void AggSal::doSomething() {
+    if(!isAlive()) return;
+    
+    if(getWorld()->calcDistSocrates(this) <= 72) {
+        if(getWorld()->attemptMove(this, getWorld()->calcAngleSocrates(this), 3)) {
+            setDirection(getWorld()->calcAngleSocrates(this));
+            moveAngle(getDirection(), 3);
+        }
+        Bacteria::doSomething();
+    } else {
+        Bacteria::doSomething();
+        Salmonella::doSpecificThing();
+    }
+}
+
+void AggSal::doSpecificThing() {}
+
+void AggSal::addBacteria(int x, int y) { getWorld()->addAggSal(x, y); }
+
+AggSal::~AggSal() {}
 
 //Goodie (virtual)
 Goodie::Goodie(int xFromCenter, int yFromCenter, int ID, int awardPts, StudentWorld* w_ptr) : Actor(ID, VIEW_WIDTH / 2 + xFromCenter, VIEW_HEIGHT / 2 + yFromCenter, 0, 1, 0, true, w_ptr){
@@ -312,12 +395,14 @@ void Goodie::doSomething() {
     if (getWorld()->overlapSocrates(this)) {
         getWorld()->increaseScore(m_award);
         setDead();
-        getWorld()->playSound(SOUND_GOT_GOODIE);
+        playSound();
         doSpecificThing();
     }
     
     if (m_lifeTime == 0) setDead();
 }
+
+void Goodie::playSound() { getWorld()->playSound(SOUND_GOT_GOODIE); }
 
 bool Goodie::damage(int n) { return false; }
 
@@ -348,5 +433,7 @@ LifeG::~LifeG() {}
 Fungus::Fungus(int xFromCenter, int yFromcenter, StudentWorld* w_ptr) : Goodie(xFromCenter, yFromcenter, IID_FUNGUS, -50, w_ptr) {}
 
 void Fungus::doSpecificThing() { getWorld()->damageSocrates(50); }
+
+void Fungus::playSound() {}
 
 Fungus::~Fungus() {}

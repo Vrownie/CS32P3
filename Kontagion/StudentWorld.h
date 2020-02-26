@@ -28,6 +28,7 @@ public:
     bool overlapSocrates(Actor* ap);
     double calcDistSocrates(Actor* ap);
     Direction calcAngleSocrates(Actor* ap);
+    bool findFood(Actor* ap, int dist, Direction& results);
     bool attemptEat(Actor* ap);
     bool attemptMove(Bacteria* bp, Direction dir, double dist);
     void incBacteriaCount();

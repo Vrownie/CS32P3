@@ -62,8 +62,8 @@ int StudentWorld::init()
     m_nPit = getLevel();
     m_nFood = min(getLevel() * 5, 25);
     m_nDirt = max(180 - getLevel() * 20, 20);
-    m_nBacteria = 1;
-    m_chanceFungus = 1;
+    m_nBacteria = 0;
+    m_chanceFungus = max(510 - getLevel() * 10, 200);
     m_chanceGoodie = max(510 - getLevel() * 10, 250);
     
     int x, y;
@@ -71,13 +71,11 @@ int StudentWorld::init()
     //add pits here
     
     for (int n = 0; n < m_nFood; n++) {
-        //check overlap here in part 2
         getValidCoords(m_list, x, y);
         m_list.push_back(new Food(x, y, this));
     }
     
     for (int n = 0; n < m_nDirt; n++) {
-        //check overlap here in part 2
         getValidCoords(m_list, x, y);
         m_list.push_back(new Dirt(x, y, this));
     }
@@ -179,9 +177,9 @@ void StudentWorld::addFlame(int x, int y, Direction dir) { m_list.push_back(new 
 
 void StudentWorld::addSpray(int x, int y, Direction dir) { m_list.push_back(new SprayProj(x, y, dir, this)); }
 
-void StudentWorld::addRegSal(int x, int y) {}
+void StudentWorld::addRegSal(int x, int y) { m_list.push_back(new RegSal(x, y, this)); }
 
-void StudentWorld::addAggSal(int x, int y) {}
+void StudentWorld::addAggSal(int x, int y) { m_list.push_back(new AggSal(x, y, this)); }
 
 void StudentWorld::addEColi(int x, int y) { m_list.push_back(new EColi(x, y, this)); }
 
@@ -204,6 +202,25 @@ Direction StudentWorld::calcAngleSocrates(Actor* ap) {
     else if (m_player->getY() - ap->getY() < 0)
         theta += 360;
     return theta;
+}
+
+bool StudentWorld::findFood(Actor* ap, int dist, Direction& results) {
+    int currentDist = 999;
+    int minDist = 999;
+    for(list<Actor*>::iterator i = m_list.begin(); i != m_list.end(); i++) {
+        if((*i)->edible() && calcDistance(*i, ap) <= dist) {
+            currentDist = calcDistance(*i, ap);
+            if(currentDist < minDist) {
+                minDist = currentDist;
+                results = atan(((*i)->getY() - ap->getY()) / ((*i)->getX() - ap->getX())) * 180 / M_PI;
+                if ((*i)->getX() - ap->getX() < 0)
+                    results += 180;
+                else if ((*i)->getY() - ap->getY() < 0)
+                    results += 360;
+            }
+        }
+    }
+    return (minDist != -1);
 }
 
 bool StudentWorld::attemptEat(Actor* ap) {
