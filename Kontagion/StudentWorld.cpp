@@ -15,13 +15,13 @@ GameWorld* createStudentWorld(string assetPath)
 
 // Students:  Add code to this file, StudentWorld.h, Actor.h and Actor.cpp
 
-void getValidCoords(list<Actor*> la, int& x, int& y) {
+void getValidCoords(list<Actor*> la, double& x, double& y) {
     bool overlapInd;
     do {
         overlapInd = false;
         randPolar(120, x, y);
         for(list<Actor*>::iterator i = la.begin(); i != la.end(); i++) {
-            if ((*i)->allowsOverlap() && overlap((*i)->getX(), (*i)->getY(), x, y)) {
+            if (!(*i)->allowsOverlap() && overlap((*i)->getX(), (*i)->getY(), x + VIEW_WIDTH / 2, y + VIEW_HEIGHT / 2)) { //needs conversion
                 overlapInd = true;
             }
         }
@@ -31,25 +31,25 @@ void getValidCoords(list<Actor*> la, int& x, int& y) {
 
 bool overlap(const Actor* a1, const Actor* a2) {
     double dist = sqrt(pow(a1->getX() - a2->getX(), 2) + pow(a1->getY() - a2->getY(), 2));
-    return dist < 2 * SPRITE_RADIUS;
+    return dist <= 2 * SPRITE_RADIUS;
 }
 
-bool overlap(int x1, int y1, int x2, int y2) {
+bool overlap(double x1, double y1, double x2, double y2) {
     double dist = sqrt(pow(x1-x2, 2) + pow(y1-y2, 2));
-    return dist < 2 * SPRITE_RADIUS;
+    return dist <= 2 * SPRITE_RADIUS;
 }
 
 bool movementOverlap(const Bacteria* b, const Actor* a) {
     double dist = sqrt(pow(b->getX() - a->getX(), 2) + pow(b->getY() - a->getY(), 2));
-    return dist < SPRITE_RADIUS;
+    return dist <= SPRITE_RADIUS;
 }
 
-bool movementOverlap(int x, int y, const Actor* a) {
+bool movementOverlap(double x, double y, const Actor* a) {
     double dist = sqrt(pow(x - a->getX(), 2) + pow(y - a->getY(), 2));
-    return dist < SPRITE_RADIUS;
+    return dist <= SPRITE_RADIUS;
 }
 
-void randPolar(int r, int& x, int& y) {
+void randPolar(double r, double& x, double& y) {
     x = randInt(-r, r);
     y = randInt(-sqrt(pow(r, 2) - pow(x, 2)), sqrt(pow(r, 2) - pow(x, 2)));
 }
@@ -66,18 +66,18 @@ int StudentWorld::init()
     m_chanceFungus = max(510 - getLevel() * 10, 200);
     m_chanceGoodie = max(510 - getLevel() * 10, 250);
     
-    int x, y;
+    double x, y;
     
     for (int n = 0; n < m_nPit; n++) {
         getValidCoords(m_list, x, y);
         m_list.push_back(new Pit(x, y, this));
     }
-    
+
     for (int n = 0; n < m_nFood; n++) {
         getValidCoords(m_list, x, y);
         m_list.push_back(new Food(x, y, this));
     }
-    
+
     for (int n = 0; n < m_nDirt; n++) {
         getValidCoords(m_list, x, y);
         m_list.push_back(new Dirt(x, y, this));
@@ -113,7 +113,13 @@ int StudentWorld::move()
     
     ostringstream oss;
     
-    oss << "Score: " << setfill('0') << setw(6) << getScore() << setw(0) << "  Level: " << getLevel() << "  Lives: " << getLives() << "  Health: " << m_player->getHP() << "  Sprays: " << m_player->getSpray() << "  Flames: " << m_player->getFlame();
+    oss << "Score: ";
+    if (getScore() < 0)
+        oss << "-" << setfill('0') << setw(5) << -getScore();
+    else
+        oss << setfill('0') << setw(6) << getScore();
+        
+    oss << setw(0) << "  Level: " << getLevel() << "  Lives: " << getLives() << "  Health: " << m_player->getHP() << "  Sprays: " << m_player->getSpray() << "  Flames: " << m_player->getFlame();
     
     setGameStatText(oss.str());
     
@@ -170,22 +176,22 @@ void StudentWorld::cleanUp()
 bool StudentWorld::damageDamageable(Actor* ap, int n) {
     for (list<Actor*>::iterator i = m_list.begin(); i != m_list.end(); i++) {
         if (overlap(ap, *i))
-            return (*i)->damage(n);
+            if ((*i)->damage(n)) return true;
     }
     return false;
 }
 
-void StudentWorld::addFlame(int x, int y, Direction dir) { m_list.push_back(new FlameProj(x, y, dir, this)); }
+void StudentWorld::addFlame(double x, double y, Direction dir) { m_list.push_back(new FlameProj(x, y, dir, this)); }
 
-void StudentWorld::addSpray(int x, int y, Direction dir) { m_list.push_back(new SprayProj(x, y, dir, this)); }
+void StudentWorld::addSpray(double x, double y, Direction dir) { m_list.push_back(new SprayProj(x, y, dir, this)); }
 
-void StudentWorld::addRegSal(int x, int y) { m_list.push_back(new RegSal(x, y, this)); }
+void StudentWorld::addRegSal(double x, double y) { m_list.push_back(new RegSal(x, y, this)); }
 
-void StudentWorld::addAggSal(int x, int y) { m_list.push_back(new AggSal(x, y, this)); }
+void StudentWorld::addAggSal(double x, double y) { m_list.push_back(new AggSal(x, y, this)); }
 
-void StudentWorld::addEColi(int x, int y) { m_list.push_back(new EColi(x, y, this)); }
+void StudentWorld::addEColi(double x, double y) { m_list.push_back(new EColi(x, y, this)); }
 
-void StudentWorld::addFood(int x, int y) { m_list.push_back(new Food(x, y, this)); }
+void StudentWorld::addFood(double x, double y) { m_list.push_back(new Food(x - VIEW_WIDTH / 2, y - VIEW_HEIGHT / 2, this)); } //converts to center coordinates
 
 void StudentWorld::restoreSocrates() { m_player->restoreHP(); }
 
@@ -206,7 +212,7 @@ Direction StudentWorld::calcAngleSocrates(Actor* ap) {
     return theta;
 }
 
-bool StudentWorld::findFood(Actor* ap, int dist, Direction& results) {
+bool StudentWorld::findFood(Actor* ap, double dist, Direction& results) {
     int currentDist = 999;
     int minDist = 999;
     for(list<Actor*>::iterator i = m_list.begin(); i != m_list.end(); i++) {
@@ -233,7 +239,7 @@ bool StudentWorld::attemptEat(Actor* ap) {
     return false;
 }
 
-bool StudentWorld::attemptMove(Bacteria* bp, Direction dir, double dist) {
+bool StudentWorld::attemptMove(Bacteria* bp, double dist, Direction dir) {
     for(list<Actor*>::iterator i = m_list.begin(); i != m_list.end(); i++) {
         if ((*i)->blocks() && movementOverlap(bp->getX() + dist * cos(dir * M_PI / 180), bp->getY() + dist * sin(dir * M_PI / 180), *i))
             return false;
