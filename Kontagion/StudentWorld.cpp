@@ -88,7 +88,6 @@ int StudentWorld::init()
 
 int StudentWorld::move()
 {
-    m_player->doSomething();
     for (list<Actor*>::iterator i = m_list.begin(); i != m_list.end(); i++) {
         if((*i)->isAlive())
             (*i)->doSomething();
@@ -102,6 +101,7 @@ int StudentWorld::move()
             return GWSTATUS_FINISHED_LEVEL;
         }
     }
+    m_player->doSomething();
     
     for (list<Actor*>::iterator i = m_list.begin(); i != m_list.end(); ) {
         if(*i != nullptr && !(*i)->isAlive()) {

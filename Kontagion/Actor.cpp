@@ -80,7 +80,7 @@ Actor::~Actor() {}
 //Socrates
 Socrates::Socrates(StudentWorld* w_ptr) : Actor(IID_PLAYER, 0, VIEW_HEIGHT / 2, 0, 0, 100, true, w_ptr) {
     m_spray = 20;
-    m_flame = 50000;
+    m_flame = 5;
 }
 
 void Socrates::doSomething() {
