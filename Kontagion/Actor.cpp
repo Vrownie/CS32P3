@@ -38,8 +38,8 @@ double calcDistance(Actor* a1, Actor* a2) {
 }
 
 void calcNewXY(double& x, double& y) {
-    x += (x < VIEW_WIDTH / 2) ? SPRITE_RADIUS : -SPRITE_RADIUS;
-    y += (y < VIEW_HEIGHT / 2) ? SPRITE_RADIUS : -SPRITE_RADIUS;
+    x += (x < VIEW_WIDTH / 2) ? SPRITE_WIDTH / 2 : -SPRITE_WIDTH / 2;
+    y += (y < VIEW_HEIGHT / 2) ? SPRITE_WIDTH / 2 : -SPRITE_WIDTH / 2;
 }
 
 bool isValidCoord(double x, double y) { return sqrt(pow(x - VIEW_WIDTH / 2, 2) + pow(y - VIEW_HEIGHT / 2, 2)) < VIEW_RADIUS; }
@@ -80,7 +80,7 @@ Actor::~Actor() {}
 //Socrates
 Socrates::Socrates(StudentWorld* w_ptr) : Actor(IID_PLAYER, 0, VIEW_HEIGHT / 2, 0, 0, 100, true, w_ptr) {
     m_spray = 20;
-    m_flame = 5;
+    m_flame = 50000;
 }
 
 void Socrates::doSomething() {
@@ -96,8 +96,8 @@ void Socrates::doSomething() {
         {
             case KEY_PRESS_SPACE:
                 if (m_spray == 0) break;
-                xC = getX() + 2 * SPRITE_RADIUS * cos(getDirection() * M_PI/180);
-                yC = getY() + 2 * SPRITE_RADIUS * sin(getDirection() * M_PI/180);
+                xC = getX() + SPRITE_WIDTH * cos(getDirection() * M_PI/180);
+                yC = getY() + SPRITE_WIDTH * sin(getDirection() * M_PI/180);
                 getWorld()->addSpray(xC, yC, getDirection());
                 m_spray--;
                 getWorld()->playSound(SOUND_PLAYER_SPRAY);
@@ -106,8 +106,8 @@ void Socrates::doSomething() {
                 if (m_flame == 0) break;
                 for (int i = 0; i < 16; i++) {
                     thetaC = (getDirection() + 22 * i) % 360;
-                    xC = getX() + 2 * SPRITE_RADIUS * cos(thetaC * M_PI/180);
-                    yC = getY() + 2 * SPRITE_RADIUS * sin(thetaC * M_PI/180);
+                    xC = getX() + SPRITE_WIDTH * cos(thetaC * M_PI/180);
+                    yC = getY() + SPRITE_WIDTH * sin(thetaC * M_PI/180);
                     getWorld()->addFlame(xC, yC, thetaC);
                 }
                 m_flame--;
@@ -188,8 +188,8 @@ void Projectile::doSomething() {
         return;
     }
     
-    moveAngle(getDirection(), 2*SPRITE_RADIUS);
-    addDist(2*SPRITE_RADIUS);
+    moveAngle(getDirection(), SPRITE_WIDTH);
+    addDist(SPRITE_WIDTH);
     
     if(getDistTravelled() >= getMaxTravel()) {
         setDead();

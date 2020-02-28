@@ -31,22 +31,22 @@ void getValidCoords(list<Actor*> la, double& x, double& y) {
 
 bool overlap(const Actor* a1, const Actor* a2) {
     double dist = sqrt(pow(a1->getX() - a2->getX(), 2) + pow(a1->getY() - a2->getY(), 2));
-    return dist <= 2 * SPRITE_RADIUS;
+    return dist <= SPRITE_WIDTH;
 }
 
 bool overlap(double x1, double y1, double x2, double y2) {
     double dist = sqrt(pow(x1-x2, 2) + pow(y1-y2, 2));
-    return dist <= 2 * SPRITE_RADIUS;
+    return dist <= SPRITE_WIDTH;
 }
 
 bool movementOverlap(const Bacteria* b, const Actor* a) {
     double dist = sqrt(pow(b->getX() - a->getX(), 2) + pow(b->getY() - a->getY(), 2));
-    return dist <= SPRITE_RADIUS;
+    return dist <= SPRITE_WIDTH / 2;
 }
 
 bool movementOverlap(double x, double y, const Actor* a) {
     double dist = sqrt(pow(x - a->getX(), 2) + pow(y - a->getY(), 2));
-    return dist <= SPRITE_RADIUS;
+    return dist <= SPRITE_WIDTH / 2;
 }
 
 void randPolar(double r, double& x, double& y) {
